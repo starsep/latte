@@ -1,0 +1,16 @@
+*.tgz
+*.tar.gz
+*.x
+*.y
+out
+*.bc
+*.ll
+*.class
+*.j
+*.o
+*.hi
+build
+Latte
+TestLatte
+dist
+testing
