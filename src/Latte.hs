@@ -9,6 +9,8 @@ import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
 import ParLatte
 import AbsLatte
 import ErrM
+import Typechecker (typecheck)
+import Errors (parsing)
 
 -- import System.Exit (die)
 -- doesn't work on ghc 7.6.3
@@ -45,6 +47,8 @@ main = do
     program <- case pProgram (myLexer source) of
         Ok p -> return p
         Bad msg -> do
-          die $ "Lexing failed: " ++ show msg
+          parsing msg
           return $ Program []
+    typecheck program
+    hPutStrLn stderr "OK"
     putStrLn $ compiler optimizeOn basename program
