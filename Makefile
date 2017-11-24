@@ -84,7 +84,5 @@ pack:
 shellcheck:
 	shellcheck $(SHELL_SCRIPTS)
 
-test:
-
 clean:
 	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz
