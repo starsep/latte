@@ -5,7 +5,7 @@ GHC=ghc
 TMP=tmp
 TEST_DIR=$(BUILD)/test
 
-SHELL_SCRIPTS=insc_jvm insc_llvm usage.sh
+SHELL_SCRIPTS=latc latc_x86_64
 FILES_TO_PACK=$(SHELL_SCRIPTS) src lib Makefile README
 PACK_NAME=fc359081.tgz
 
