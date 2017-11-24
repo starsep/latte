@@ -39,3 +39,9 @@ Działają one zgodnie ze specyfikacją zadania.
 - Makefile
 - README
 
+# Zapożyczenia
+Moje projekty:
+- interpreter języka opartego na Latte (w ramach IPP) https://github.com/starsep/lang
+- pierwsze zadanie z MRJP - kompilator Instant
+
+Testy z https://github.com/tomwys/mrjp-tests

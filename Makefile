@@ -16,7 +16,7 @@ BNFC_SOURCES_FILES=AbsLatte.hs ErrM.hs LexLatte.hs \
 	ParLatte.hs PrintLatte.hs TestLatte.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
-.PHONY: all clean pack test testGood testGoodBasic testGoodCore testBad run runGood runGoodCore runGoodBasic runBad 
+.PHONY: all clean pack test testGood testBad run runGood runBad 
 
 all: $(BINARIES)
 
@@ -30,20 +30,17 @@ define test_examples
 	done
 endef
 
-testGoodBasic: good/basic Latte
-	$(call test_examples,$<,OK)
+testGood: Latte
+	$(call test_examples,good,OK)
+	$(call test_examples,good/basic,OK)
 
-testGoodCore: good Latte
-	$(call test_examples,$<,OK)
-
-testGood: testGoodCore testGoodBasic
-
-testBad: bad Latte
-	-$(call test_examples,$<,ERROR)
+testBad: Latte
+	$(call test_examples,bad,ERROR)
+	$(call test_examples,bad/semantic,ERROR)
+	$(call test_examples,bad/infinite_loop,ERROR)
 
 define run_examples
-	@set -e; \
-	for e in $1/*.lat ; do \
+	@for e in $1/*.lat ; do \
 		echo -e "\e[93m----------- RUNNING\e[96m $$e \e[93m--------------\e[0m"; \
 		./Latte "$$e" ; \
 	done
@@ -51,13 +48,9 @@ endef
 
 run: runGood runBad
 
-runGoodBasic: good/basic Latte
-	$(call run_examples,$<)
-
-runGoodCore: good Latte
-	$(call run_examples,$<)
-
-runGood: runGoodCore runGoodBasic
+runGood: good Latte
+	$(call run_examples,good)
+	$(call run_examples,good/basic)
 
 runBad: bad Latte
 	-$(call run_examples,$<)
