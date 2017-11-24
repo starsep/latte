@@ -1,0 +1,41 @@
+Filip Czaplicki <fc359081@students.mimuw.edu.pl>
+
+[![Build Status](https://travis-ci.com/starsep/latte.svg?token=pEpks3xQCroxuTSsHPm9&branch=master)](https://travis-ci.com/starsep/latte)
+
+# Kompilacja
+Program kompliluje się po wykonaniu `make`.
+Za pomocą `bnfc`, `happy` oraz `alex` generowane jest z
+gramatyki część źródeł.
+Napisany przeze mnie kod wraz z wygenerowanym kompilowany
+jest przez `ghc`.
+W korzeniu projektu powstaje binarka `Latte`.
+
+# Uruchamianie programu
+Program `Latte` przyjmuje jako parametry:
+- ściężkę do pliku źródłowego
+- (opcjonalnie) flagę `-O0` (słownie: minus o zero),
+  która wyłącza optymalizacje
+
+Wynik wypisuje na standardowe wyjście.
+
+Napisałem także dwa skrypty bashowe
+odpalające `Latte`: `latc` oraz `latc_x86_64`.
+Działają one zgodnie ze specyfikacją zadania.
+
+# Narzędzia i biblioteki
+- BNFC
+- Haskell oraz jego standardowa biblioteka
+- biblioteka mtl: monada ReaderWriterState - https://hackage.haskell.org/package/mtl
+
+# Struktura projektu
+- src
+    * Latte.hs - główny plik kompilatora, obsługa IO, argumentów itp.
+    * Compiler.hs - backend kompilatora
+    * Typechecker.hs - statyczna analiza kodu/frontend kompilator
+    * Errors.hs - funkcje pomocnicze do wypisywania błędów
+    * Latte.cf - gramatyka języka
+- `latc`
+- `latc_x86_64`
+- Makefile
+- README
+
