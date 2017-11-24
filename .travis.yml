@@ -41,3 +41,4 @@ after_install:
 script:
  - make
  - make shellcheck
+ - make test

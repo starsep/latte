@@ -16,9 +16,51 @@ BNFC_SOURCES_FILES=AbsLatte.hs ErrM.hs LexLatte.hs \
 	ParLatte.hs PrintLatte.hs TestLatte.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
-.PHONY: all clean pack
+.PHONY: all clean pack test testGood testGoodBasic testGoodCore testBad run runGood runGoodCore runGoodBasic runBad 
 
 all: $(BINARIES)
+
+test: testGood testBad
+
+define test_examples
+	@for e in $1/*.lat ; do \
+		echo -e "\e[93m----------- TESTING\e[96m $$e \e[93m--------------\e[0m"; \
+		./Latte "$$e" 2>&1 | tee build/output ; \
+		[ "x$$(head -n 1 build/output)" = "x$2" ] || exit 1;  \
+	done
+endef
+
+testGoodBasic: good/basic Latte
+	$(call test_examples,$<,OK)
+
+testGoodCore: good Latte
+	$(call test_examples,$<,OK)
+
+testGood: testGoodCore testGoodBasic
+
+testBad: bad Latte
+	-$(call test_examples,$<,ERROR)
+
+define run_examples
+	@set -e; \
+	for e in $1/*.lat ; do \
+		echo -e "\e[93m----------- RUNNING\e[96m $$e \e[93m--------------\e[0m"; \
+		./Latte "$$e" ; \
+	done
+endef
+
+run: runGood runBad
+
+runGoodBasic: good/basic Latte
+	$(call run_examples,$<)
+
+runGoodCore: good Latte
+	$(call run_examples,$<)
+
+runGood: runGoodCore runGoodBasic
+
+runBad: bad Latte
+	-$(call run_examples,$<)
 
 $(BINARIES): %: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
@@ -42,5 +84,7 @@ pack:
 shellcheck:
 	shellcheck $(SHELL_SCRIPTS)
 
+test:
+
 clean:
-	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz 
+	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz
