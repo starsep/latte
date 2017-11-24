@@ -9,6 +9,11 @@ cache:
   - $HOME/.cabal
   - $HOME/.stack
 
+addons:
+  - apt:
+    packages:
+    - shellcheck
+
 matrix:
   include:
     - env: CABALVER=1.16 GHCVER=7.6.3 ALEXVER=3.1.3 HAPPYVER=1.19.3 BNFCURL=https://launchpad.net/ubuntu/+source/bnfc/2.4.2.0-2/+build/3378744/+files/bnfc_2.4.2.0-2_amd64.deb
@@ -35,3 +40,4 @@ after_install:
 
 script:
  - make
+ - make shellcheck
