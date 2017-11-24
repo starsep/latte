@@ -2,11 +2,10 @@ BUILD=build
 SHELL=/usr/bin/env bash
 GHCFLAGS= #-Wall
 GHC=ghc
-TMP=tmp
-TEST_DIR=$(BUILD)/test
 
 SHELL_SCRIPTS=latc latc_x86_64
-FILES_TO_PACK=$(SHELL_SCRIPTS) src lib Makefile README
+TEST_DIRECTORIES=good bad extensions gr5
+FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
 PACK_NAME=fc359081.tgz
 
 BINARIES=Latte TestLatte
