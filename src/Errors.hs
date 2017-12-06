@@ -3,171 +3,146 @@ module Errors
    retVoid, badRetType, expectedExpression, shadowTopDef,
    variableUndeclared, diffTypesBinOp, sameArgNames, voidArgument, nonNumeric,
    nonBoolean, functionUndeclared, numberOfArgs, typesOfArgs, nonComparable,
-   alreadyDecl, notReturning, funNoInit, int32, voidVariable) where
-import AbsLatte
-import PrintLatte
-import Data.Char
-import Data.List
-import System.Exit
-import System.IO (stderr, hPutStr, hPutStrLn)
+   alreadyDecl, notReturning, funNoInit, int32, voidVariable,
+   typeString) where
 
-escapeChar :: Char
-escapeChar = chr 27
+import AbsLatte
+import Context
+import Print
+import System.Exit
+import System.IO (stderr, hPutStr, hPutStrLn, hPrint)
+
+type ErrorFun = Context -> IO ()
+
 errorColor :: IO ()
 errorColor = hPutStr stderr $ escapeChar : "[31;1m"
--- warningColor :: IO ()
--- warningColor = hPutStr stderr $ escapeChar : "[33;1m"
-normalColor :: String
-normalColor = escapeChar : "[0m"
-typeColor :: String
-typeColor = escapeChar : "[34;1m"
-exprColor :: String
-exprColor = escapeChar : "[35;1m"
 
-typeString :: Type -> String
-typeString t =
-  typeColor ++ printTree t ++ normalColor
-
-typesString :: [Type] -> String
-typesString t = concat $ ("[" : intersperse "," (map typeString t)) ++ ["]"]
-
-exprString :: Expr -> String
-exprString e =
-  exprColor ++ printTree e ++ normalColor
-
-numString :: Integer -> String
-numString n = exprColor ++ show n ++ normalColor
-
-identString :: Ident -> String
-identString ident = exprString $ EVar ident
-
-typeOfString :: Type -> String
-typeOfString t =
-  " (typeof = " ++ typeString t ++ ") "
-
-errorTemplate :: String -> String -> IO ()
-errorTemplate header msg = do
+errorTemplate :: String -> String -> ErrorFun
+errorTemplate header msg context = do
   hPutStrLn stderr "ERROR"
+  let (Context x) = context
+      revContext = Context $ reverse x
+  hPrint stderr revContext
   errorColor
   hPutStr stderr $ header ++ ": "
   hPutStr stderr normalColor
   hPutStrLn stderr msg
   exitFailure
 
--- printWarning :: String -> IO ()
+-- printWarning :: String -> ErrorFun
 -- printWarning msg = do
 --   warningColor
 --   hPutStr stderr "Warning: "
 --   hPutStr stderr normalColor
 --   hPutStrLn stderr msg
 
-parsing :: String -> IO ()
+parsing :: String -> ErrorFun
 parsing = errorTemplate "Parsing"
 
-typecheck :: String -> IO ()
+typecheck :: String -> ErrorFun
 typecheck = errorTemplate "Typecheck"
 
--- typecheckWarn :: String -> IO ()
+-- typecheckWarn :: String -> ErrorFun
 -- typecheckWarn msg = printWarning $ "typecheck: " ++ msg
 
-multipleFnDef :: Ident -> IO ()
+multipleFnDef :: PIdent -> ErrorFun
 multipleFnDef ident =
-  typecheck $ "multiple definitions of function " ++ identString ident
+  typecheck $ "multiple definitions of function " ++ pidentString ident
 
-noMain :: IO ()
-noMain = typecheck "there is no main function"
+mainString :: String
+mainString = identString (Ident "main")
 
-badMain :: IO ()
-badMain = typecheck $ "main function has bad type, it " ++
+noMain :: ErrorFun
+noMain = typecheck $ "there is no " ++ mainString ++ " function"
+
+badMain :: ErrorFun
+badMain = typecheck $ mainString ++ " function has bad type, it " ++
                       "should be " ++ typeString Int ++ " without arguments"
 
-vRetNoVoid :: Type -> IO ()
+vRetNoVoid :: Type -> ErrorFun
 vRetNoVoid t =
   typecheck $ "return without value in function returning " ++ typeString t
 
-retVoid :: Expr -> IO ()
-retVoid e = typecheck $ "returning " ++ exprString e ++ " in " ++
-  typeString Void ++ " function"
+retVoid :: Expr -> Type -> ErrorFun
+retVoid e outType = typecheck $
+  "returning " ++ exprString e ++ typeOfString outType ++
+  "in " ++ typeString Void ++ " function"
 
-badRetType :: Expr -> Type -> Type -> IO ()
+badRetType :: Expr -> Type -> Type -> ErrorFun
 badRetType e t rt = typecheck $ "returning " ++ exprString e ++
   typeOfString t ++ "in function returning " ++ typeString rt
 
-expectedExpression :: Expr -> Type -> Type -> IO ()
+expectedExpression :: Expr -> Type -> Type -> ErrorFun
 expectedExpression e t expected = typecheck $ "expected expression of type " ++
   typeString expected ++ " got " ++ exprString e ++ typeOfString t
 
-shadowTopDef :: Ident -> IO ()
-shadowTopDef ident = typecheck $ "shadowing function " ++ identString ident
+shadowTopDef :: PIdent -> ErrorFun
+shadowTopDef ident = typecheck $ "shadowing function " ++ pidentString ident
 
--- shadowVariable :: Ident -> IO ()
--- shadowVariable ident =
---   typecheckWarn $ "shadowing variable " ++ identString ident
-
-variableUndeclared :: Ident -> IO ()
-variableUndeclared ident = typecheck $ "variable " ++ identString ident
+variableUndeclared :: PIdent -> ErrorFun
+variableUndeclared ident = typecheck $ "variable " ++ pidentString ident
   ++ " is undeclared"
 
-diffTypesBinOp :: String -> Type -> Type -> IO ()
+diffTypesBinOp :: String -> Type -> Type -> ErrorFun
 diffTypesBinOp op t1 t2 = typecheck $ op ++ " on different types: " ++
   typeString t1 ++ " and " ++ typeString t2
 
-sameArgNames :: Ident -> IO ()
+sameArgNames :: PIdent -> ErrorFun
 sameArgNames ident =
-  typecheck $ "duplicate argument name " ++ identString ident
+  typecheck $ "duplicate argument name " ++ pidentString ident
 
-voidArgument :: Ident -> IO ()
+voidArgument :: PIdent -> ErrorFun
 voidArgument ident =
-  typecheck $ "argument " ++ identString ident ++ " of " ++ typeString Void ++
+  typecheck $ "argument " ++ pidentString ident ++ " of " ++ typeString Void ++
     " type"
 
-voidVariable :: Ident -> IO ()
+voidVariable :: PIdent -> ErrorFun
 voidVariable ident =
-  typecheck $ "declaring variable " ++ identString ident ++ " with " ++
+  typecheck $ "declaring variable " ++ pidentString ident ++ " with " ++
   typeString Void ++ " type"
 
-nonNumeric :: Expr -> Type -> IO ()
+nonNumeric :: Expr -> Type -> ErrorFun
 nonNumeric expr t =
   typecheck $ exprString expr ++ " is not numeric" ++ typeOfString t
 
-nonBoolean :: Expr -> IO ()
+nonBoolean :: Expr -> ErrorFun
 nonBoolean expr = typecheck $ exprString expr ++ " is not boolean"
 
-functionUndeclared :: Ident -> IO ()
-functionUndeclared ident = typecheck $ "function " ++ identString ident ++
+functionUndeclared :: PIdent -> ErrorFun
+functionUndeclared ident = typecheck $ "function " ++ pidentString ident ++
   " is not declared in this scope"
 
 arguments :: Int -> String
 arguments 1 = "argument"
 arguments _ = "arguments"
 
-numberOfArgs :: Ident -> Int -> Int -> IO ()
+numberOfArgs :: PIdent -> Int -> Int -> ErrorFun
 numberOfArgs ident nArgs expected =
-  typecheck $ "function " ++ identString ident ++ " expected " ++
+  typecheck $ "function " ++ pidentString ident ++ " expected " ++
   numString (toInteger expected) ++ " " ++ arguments expected ++ ", " ++
   numString (toInteger nArgs) ++ " given"
 
-typesOfArgs :: Ident -> [Type] -> [Type] -> IO ()
+typesOfArgs :: PIdent -> [Type] -> [Type] -> ErrorFun
 typesOfArgs ident argsTypes types = typecheck $ "function " ++
-  identString ident ++ " args types are " ++ typesString types ++
+  pidentString ident ++ " args types are " ++ typesString types ++
   ", trying to invoke function with args types " ++ typesString argsTypes
 
-nonComparable :: Expr -> Type -> IO ()
+nonComparable :: Expr -> Type -> ErrorFun
 nonComparable expr t = typecheck $ "expected iterable expression, got " ++
   exprString expr ++ " which is" ++ typeOfString t
 
-alreadyDecl :: Ident -> IO ()
-alreadyDecl ident = typecheck $ identString ident ++
+alreadyDecl :: PIdent -> ErrorFun
+alreadyDecl ident = typecheck $ pidentString ident ++
   " is already declared in this scope"
 
-notReturning :: Ident -> IO ()
+notReturning :: PIdent -> ErrorFun
 notReturning i =
-  typecheck $ "function " ++ identString i ++ " may not return value"
+  typecheck $ "function " ++ pidentString i ++ " may not return value"
 
-funNoInit :: Ident -> Type -> IO ()
-funNoInit i t = typecheck $ "declaring function var " ++ identString i ++
+funNoInit :: PIdent -> Type -> ErrorFun
+funNoInit i t = typecheck $ "declaring function var " ++ pidentString i ++
   " without init" ++ typeOfString t
 
-int32 :: Integer -> IO ()
+int32 :: Integer -> ErrorFun
 int32 i = typecheck $ "integer literal " ++ numString i ++ " doesn't fit " ++
   typeString Int

@@ -1,14 +1,18 @@
+-- ident ---------------------------------------------------
+
+position token PIdent (letter (letter | digit | '_' | '\'')*) ;
+
 -- programs ------------------------------------------------
 
 entrypoints Program ;
 
 Program.   Program ::= [TopDef] ;
 
-FnDef.	   TopDef ::= Type Ident "(" [Arg] ")" Block ;
+FnDef.	   TopDef ::= Type PIdent "(" [Arg] ")" Block ;
 
 separator nonempty TopDef "" ;
 
-Arg. 	   Arg ::= Type Ident;
+Arg. 	   Arg ::= Type PIdent;
 
 separator  Arg "," ;
 
@@ -24,17 +28,17 @@ BStmt.     Stmt ::= Block ;
 
 Decl.      Stmt ::= Type [Item] ";" ;
 
-NoInit.    Item ::= Ident ; 
+NoInit.    Item ::= PIdent ; 
 
-Init.      Item ::= Ident "=" Expr ;
+Init.      Item ::= PIdent "=" Expr ;
 
 separator nonempty Item "," ;
 
-Ass.       Stmt ::= Ident "=" Expr  ";" ;
+Ass.       Stmt ::= PIdent "=" Expr  ";" ;
 
-Incr.      Stmt ::= Ident "++"  ";" ;
+Incr.      Stmt ::= PIdent "++"  ";" ;
 
-Decr.      Stmt ::= Ident "--"  ";" ;
+Decr.      Stmt ::= PIdent "--"  ";" ;
 
 Ret.       Stmt ::= "return" Expr ";" ;
 
@@ -64,7 +68,7 @@ separator  Type "," ;
 
 -- Expressions ---------------------------------------------
 
-EVar.      Expr6 ::= Ident ;
+EVar.      Expr6 ::= PIdent ;
 
 ELitInt.   Expr6 ::= Integer ;
 
@@ -72,7 +76,7 @@ ELitTrue.  Expr6 ::= "true" ;
 
 ELitFalse. Expr6 ::= "false" ;
 
-EApp.      Expr6 ::= Ident "(" [Expr] ")" ;
+EApp.      Expr6 ::= PIdent "(" [Expr] ")" ;
 
 EString.   Expr6 ::= String ;
 

@@ -1,52 +1,38 @@
-module Typechecker (typecheck, itemIdent) where
+module Typechecker (typecheck) where
 
 import AbsLatte
 import Control.Monad
-import Control.Monad.RWS (RWST, ask, get, put, lift, runRWST)
+import Control.Monad.RWS (ask, get, put, lift, runRWST)
 import qualified Data.Map as Map
-import Data.Map (Map, (!))
+import Data.Map ((!))
 import qualified Errors
 import PrintLatte (printTree)
 import Data.Int
+import Context
+import TypecheckerState
 
-type TypedFnDefs = Map Ident Type
-type TCEnv = (TypedFnDefs, Type)
-type TCIdentState = Map Ident (Bool, Type)
-type TCDeclState = [Ident]
-type TCState = (TCIdentState, TCDeclState)
-type TCMonad = RWST TCEnv () TCState IO
+showError :: (Context -> IO ()) -> TCMonad ()
+showError f = do
+  context <- getContext
+  lift $ f context
 
-getState :: TCMonad TCIdentState
-getState = do
-  (s, _) <- get
-  return s
-
-putState :: TCIdentState -> TCMonad ()
-putState newState = do
-  decl <- getDecl
-  put (newState, decl)
-
-getDecl :: TCMonad TCDeclState
-getDecl = do
-  (_, decl) <- get
-  return decl
-
-addDecl :: Ident -> TCMonad ()
-addDecl ident = do
-  (s, decl) <- get
-  when (ident `elem` decl) $ lift $ Errors.alreadyDecl ident
-  put (s, ident : decl)
+addDecl :: PIdent -> TCMonad ()
+addDecl pident = do
+  let ident = toIdent pident
+  (s, decl, context) <- get
+  when (ident `elem` decl) $ showError $ Errors.alreadyDecl pident
+  put (s, ident : decl, context)
 
 typeOf :: Expr -> TCMonad Type
 typeOf q =
   case q of
     EApp ident args -> outputType ident args
-    EVar ident -> typeOfIdent ident
+    EVar pident -> typeOfIdent pident
     ELitInt x -> do
       let minInt = toInteger (minBound :: Int32)
-      let maxInt = toInteger (maxBound :: Int32)
+          maxInt = toInteger (maxBound :: Int32)
       when (x < minInt || x > maxInt) $
-        lift $ Errors.int32 x
+        showError $ Errors.int32 x
       return Int
     EString _ -> return Str
     ELitFalse -> return Bool
@@ -72,20 +58,24 @@ typeOfFun ident = do
   (typed, _) <- ask
   return $ typed ! ident
 
-typeOfVar :: Ident -> TCMonad Type
-typeOfVar ident = do
+toIdent :: PIdent -> Ident
+toIdent (PIdent (_, ident)) = Ident ident
+
+typeOfVar :: PIdent -> TCMonad Type
+typeOfVar pident = do
   state <- getState
-  assertVarDeclared ident
-  let (_, t) = state ! ident
+  assertVarDeclared pident
+  let (_, t) = state ! toIdent pident
   return t
 
-typeOfIdent :: Ident -> TCMonad Type
-typeOfIdent ident = do
+typeOfIdent :: PIdent -> TCMonad Type
+typeOfIdent pident = do
   (typed, _) <- ask
+  let ident = toIdent pident
   if Map.member ident typed then
     typeOfFun ident
   else
-    typeOfVar ident
+    typeOfVar pident
 
 checkBExprOp :: Expr -> Expr -> TCMonad Type
 checkBExprOp b1 b2 = do
@@ -97,7 +87,7 @@ checkBinOp :: Expr -> Expr -> String -> TCMonad Type
 checkBinOp expr1 expr2 name = do
   t1 <- typeOf expr1
   t2 <- typeOf expr2
-  unless (t1 == t2) $ lift $ Errors.diffTypesBinOp name t1 t2
+  unless (t1 == t2) $ showError $ Errors.diffTypesBinOp name t1 t2
   return t1
 
 assertNumericExpr :: Expr -> TCMonad ()
@@ -105,7 +95,7 @@ assertNumericExpr expr = do
   t <- typeOf expr
   case t of
     Int -> return ()
-    _ -> lift $ Errors.nonNumeric expr t
+    _ -> showError $ Errors.nonNumeric expr t
 
 checkNeg :: Expr -> TCMonad Type
 checkNeg expr = do
@@ -129,28 +119,32 @@ checkNumOp expr1 expr2 name = do
   assertNumericExpr expr2
   checkBinOp expr1 expr2 name
 
-checkArgs :: Ident -> [Expr] -> [Type] -> TCMonad ()
-checkArgs ident args types = do
+checkArgs :: PIdent -> [Expr] -> [Type] -> TCMonad ()
+checkArgs pident args types = do
   let nArgs = length args
       expected = length types
-  when (nArgs /= expected) $ lift $ Errors.numberOfArgs ident nArgs expected
+  when (nArgs /= expected) $
+    showError $ Errors.numberOfArgs pident nArgs expected
   argsTypes <- mapM typeOf args
-  when (argsTypes /= types) $ lift $ Errors.typesOfArgs ident argsTypes types
+  when (argsTypes /= types) $
+    showError $ Errors.typesOfArgs pident argsTypes types
 
-outputTypeFun :: Ident -> [Expr] -> TCMonad Type
-outputTypeFun ident args = do
+outputTypeFun :: PIdent -> [Expr] -> TCMonad Type
+outputTypeFun pident args = do
   (typed, _) <- ask
-  let (Fun out argsTypes) = typed ! ident
-  checkArgs ident args argsTypes
+  let ident = toIdent pident
+      (Fun out argsTypes) = typed ! ident
+  checkArgs pident args argsTypes
   return out
 
-outputType :: Ident -> [Expr] -> TCMonad Type
-outputType ident args = do
+outputType :: PIdent -> [Expr] -> TCMonad Type
+outputType pident args = do
+  let ident = toIdent pident
   (typed, _) <- ask
   if Map.member ident typed then
-    outputTypeFun ident args
+    outputTypeFun pident args
   else do
-    _ <- lift $ Errors.functionUndeclared ident
+    _ <- showError $ Errors.functionUndeclared pident
     return Int
 
 fnHeaderToFnType :: Type -> [Arg] -> Type
@@ -158,57 +152,69 @@ fnHeaderToFnType outType args =
   Fun outType $ map (\arg -> case arg of Arg t _ -> t) args
 
 addTypedFnDef :: TypedFnDefs -> TopDef -> IO TypedFnDefs
-addTypedFnDef typed (FnDef outType ident args _) = do
-  when (Map.member ident typed) $ Errors.multipleFnDef ident
+addTypedFnDef typed (FnDef outType pident args _) = do
+  let ident = toIdent pident
+      context = Context [] -- TODO
+  when (Map.member ident typed) $
+    Errors.multipleFnDef pident context
   return $ Map.insert ident (fnHeaderToFnType outType args) typed
 
 assertCorrectMain :: TypedFnDefs -> IO ()
 assertCorrectMain typedFns = do
-  when (Map.notMember (Ident "main") typedFns) Errors.noMain
+  let context = Context [] -- TODO
+  when (Map.notMember (Ident "main") typedFns) $
+    Errors.noMain context
   case typedFns ! Ident "main" of
     Fun Int [] -> return ()
-    _ -> Errors.badMain
+    _ -> Errors.badMain context
 
-checkShadow :: Ident -> TCMonad ()
-checkShadow ident = do
+checkShadow :: PIdent -> TCMonad ()
+checkShadow pident = do
+  let ident = toIdent pident
   (typed, _) <- ask
-  state <- getState
-  when (Map.member ident typed) $ lift $ Errors.shadowTopDef ident
-  -- when (Map.member ident state) $ lift $ Errors.shadowVariable ident
+  when (Map.member ident typed) $
+    showError $ Errors.shadowTopDef pident
 
 assertType :: Expr -> Type -> TCMonad ()
 assertType expr t = do
   typeof <- typeOf expr
-  when (t /= typeof) $ lift $ Errors.expectedExpression expr typeof t
+  when (t /= typeof) $
+    showError $ Errors.expectedExpression expr typeof t
 
-assertVarDeclared :: Ident -> TCMonad ()
-assertVarDeclared ident = do
+assertVarDeclared :: PIdent -> TCMonad ()
+assertVarDeclared pident = do
   state <- getState
-  when (Map.notMember ident state) $ lift $ Errors.variableUndeclared ident
+  let ident = toIdent pident
+  when (Map.notMember ident state) $
+    showError $ Errors.variableUndeclared pident
 
 itemIdent :: Item -> Ident
-itemIdent item = case item of
+itemIdent = toIdent . itemPIdent
+
+itemPIdent :: Item -> PIdent
+itemPIdent item = case item of
   Init ident _ -> ident
   NoInit ident -> ident
 
 typecheckDecl :: Item -> Type -> TCMonad ()
 typecheckDecl item t = do
-  when (t == Void) $ lift $ Errors.voidVariable $ itemIdent item
-  let ident = itemIdent item
+  when (t == Void) $
+    showError $ Errors.voidVariable $ itemPIdent item
+  let pident = itemPIdent item
   case item of
     NoInit _ -> return ()
     Init _ expr -> assertType expr t
   state <- getState
-  addDecl ident
-  checkShadow ident
-  putState (Map.insert (itemIdent item) (False, t) state)
+  addDecl pident
+  checkShadow pident
+  void $ putState (Map.insert (itemIdent item) (False, t) state)
 
-typecheckIncr :: Ident -> TCMonad ()
+typecheckIncr :: PIdent -> TCMonad ()
 typecheckIncr ident = do
   assertVarDeclared ident
   assertType (EVar ident) Int
 
-typecheckAss :: Ident -> Expr -> TCMonad ()
+typecheckAss :: PIdent -> Expr -> TCMonad ()
 typecheckAss ident expr = do
   ltype <- typeOf $ EVar ident
   assertType expr ltype
@@ -217,7 +223,7 @@ assertComparable :: Expr -> TCMonad ()
 assertComparable expr = do
   t <- typeOf expr
   case t of
-    Fun _ _ -> lift $ Errors.nonComparable expr t
+    Fun _ _ -> showError $ Errors.nonComparable expr t
     _ -> return ()
 
 checkRelOp :: Expr -> Expr -> String -> TCMonad ()
@@ -230,7 +236,7 @@ assertBExpr bExpr = do
   t <- typeOf bExpr
   case t of
     Bool -> return ()
-    _ -> lift $ Errors.nonBoolean bExpr
+    _ -> showError $ Errors.nonBoolean bExpr
 
 typecheckStmt :: Stmt -> TCMonad ()
 typecheckStmt stmt = do
@@ -243,41 +249,58 @@ typecheckStmt stmt = do
     Incr ident -> typecheckIncr ident
     Decr ident -> typecheckIncr ident
     Ret expr -> do
-      when (returnType == Void) $ lift $ Errors.retVoid expr
       t <- typeOf expr
-      when (returnType /= t) $ lift $ Errors.badRetType expr t returnType
-    VRet -> when (returnType /= Void) $ lift $ Errors.vRetNoVoid returnType
+      when (returnType == Void) $
+        showError $ Errors.retVoid expr t
+      when (returnType /= t) $
+        showError $ Errors.badRetType expr t returnType
+    VRet -> when (returnType /= Void) $
+      showError $ Errors.vRetNoVoid returnType
     While bExpr stmt' -> do
       assertBExpr bExpr
+      addContext $ CWhile bExpr
       typecheckStmt stmt'
+      dropContext
     SExp expr -> void $ typeOf expr
     Cond expr stmt' -> do
       assertBExpr expr
+      addContext $ CIf expr
       typecheckStmt stmt'
+      dropContext
     CondElse expr stmt1 stmt2 -> do
       assertBExpr expr
+      addContext $ CIf expr
       typecheckStmt stmt1
+      dropContext
+      addContext CElse
       typecheckStmt stmt2
+      dropContext
 
 typecheckBlock :: Block -> TCMonad ()
 typecheckBlock (Block stmts) = do
-  (state, decl) <- get
-  put (state, [])
+  (state, decl, context) <- get
+  put (state, [], context)
   forM_ stmts typecheckStmt
-  put (state, decl)
+  put (state, decl, context)
 
-addFunctionArgToState :: TCIdentState -> Arg -> IO TCIdentState
-addFunctionArgToState state (Arg t arg) = do
-  when (t == Void) $ Errors.voidArgument arg
-  when (Map.member arg state) $ Errors.sameArgNames arg
+addFunctionArgToState :: Context -> TCIdentState -> Arg -> IO TCIdentState
+addFunctionArgToState context state (Arg t argPIdent) = do
+  let arg = toIdent argPIdent
+  when (t == Void) $
+    Errors.voidArgument argPIdent context
+  when (Map.member arg state) $
+    Errors.sameArgNames argPIdent context
   return $ Map.insert arg (False, t) state
 
 typecheckFunction :: TopDef -> TypedFnDefs -> IO ()
-typecheckFunction (FnDef outType i args body) typed = do
-  funState <- foldM addFunctionArgToState Map.empty args
-  void $ runRWST (typecheckBlock body) (typed, outType) (funState, [])
+typecheckFunction fun@(FnDef outType i args body) typed = do
+  let context = Context [CFun fun]
+  funState <- foldM (addFunctionArgToState context) Map.empty args
+  let initState = (funState, [], context)
+      initEnv = (typed, outType)
+  void $ runRWST (typecheckBlock body) initEnv initState
   when ((outType /= Void) && not (isReturning (BStmt body))) $
-    Errors.notReturning i
+    Errors.notReturning i context
 
 isTrue :: Expr -> Bool
 isTrue bExpr = case bExpr of

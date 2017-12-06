@@ -6,6 +6,7 @@ import System.Exit (exitFailure)
 import System.Environment (getArgs, getExecutablePath)
 import System.FilePath.Posix (takeBaseName)
 import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
+import Context
 import ParLatte
 import AbsLatte
 import ErrM
@@ -47,7 +48,7 @@ main = do
     program <- case pProgram (myLexer source) of
         Ok p -> return p
         Bad msg -> do
-          parsing msg
+          parsing msg $ Context []
           return $ Program []
     typecheck program
     hPutStrLn stderr "OK"

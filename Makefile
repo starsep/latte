@@ -9,7 +9,7 @@ FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
 PACK_NAME=fc359081.tgz
 
 BINARIES=Latte TestLatte
-SOURCES=Compiler Latte Typechecker Errors
+SOURCES=Compiler Context Errors Latte Print Typechecker TypecheckerState
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES)))
 BNFC_SOURCES_FILES=AbsLatte.hs ErrM.hs LexLatte.hs \
 	ParLatte.hs PrintLatte.hs TestLatte.hs
