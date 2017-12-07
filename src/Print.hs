@@ -1,14 +1,11 @@
 module Print (
   escapeChar, exprString, normalColor, numString, identString,
-  pidentString, typeOfString, typeString, typesString, Ident(..)) where
+  typeOfString, typeString, typesString, stmtString) where
 
 import AbsLatte
 import PrintLatte
 import Data.Char
 import Data.List
-
-newtype Ident = Ident String
-  deriving (Eq, Ord, Show, Read)
 
 escapeChar :: Char
 escapeChar = chr 27
@@ -31,15 +28,15 @@ exprString :: Expr -> String
 exprString e =
   exprColor ++ printTree e ++ normalColor
 
+stmtString :: Stmt -> String
+stmtString s =
+  init $ printTree s
+
 numString :: Integer -> String
 numString n = exprColor ++ show n ++ normalColor
 
 identString :: Ident -> String
-identString (Ident ident) = exprString $ EVar (PIdent ((0, 0), ident))
-
-pidentString :: PIdent -> String
-pidentString pident =
-  exprString $ EVar pident -- ++ " at line " ++ show line ++ ":" ++ show pos
+identString ident = exprString $ EVar ident
 
 typeOfString :: Type -> String
 typeOfString t =

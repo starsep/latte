@@ -48,7 +48,7 @@ main = do
     program <- case pProgram (myLexer source) of
         Ok p -> return p
         Bad msg -> do
-          parsing msg $ Context []
+          parsing msg $ Context [CParLex]
           return $ Program []
     typecheck program
     hPutStrLn stderr "OK"
