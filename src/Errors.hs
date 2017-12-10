@@ -4,7 +4,8 @@ module Errors
    variableUndeclared, diffTypesBinOp, sameArgNames, voidArgument, nonNumeric,
    nonBoolean, functionUndeclared, numberOfArgs, typesOfArgs, nonComparable,
    alreadyDecl, notReturning, funNoInit, int32, voidVariable,
-   typeString) where
+   typeString, notArray, arrayOfComplexType, notArrayIndex,
+   notMatchingTypeIndex, badArrayType) where
 
 import AbsLatte
 import Context
@@ -95,6 +96,10 @@ nonNumeric :: Expr -> Type -> ErrorFun
 nonNumeric expr t =
   typecheck $ exprString expr ++ " is not numeric" ++ typeOfString t
 
+notArray :: Expr -> Type -> ErrorFun
+notArray expr t =
+  typecheck $ exprString expr ++ " is not array " ++ typeOfString t
+
 nonBoolean :: Expr -> ErrorFun
 nonBoolean expr = typecheck $ exprString expr ++ " is not boolean"
 
@@ -136,3 +141,22 @@ funNoInit i t = typecheck $ "declaring function var " ++ identString i ++
 int32 :: Integer -> ErrorFun
 int32 i = typecheck $ "integer literal " ++ numString i ++ " doesn't fit " ++
   typeString Int
+
+arrayOfComplexType :: Type -> ErrorFun
+arrayOfComplexType t =
+  typecheck $ "arrays of complex type: " ++ typeString t ++
+  " are not supported"
+
+notArrayIndex :: Expr -> ErrorFun
+notArrayIndex expr =
+  typecheck $ exprString expr ++ " is not array index"
+
+notMatchingTypeIndex :: Type -> Type -> ErrorFun
+notMatchingTypeIndex indexType t =
+  typecheck $ "array index type " ++ typeString indexType ++ " does not match "
+  ++ " expression type " ++ typeString t
+
+badArrayType :: Expr -> Type -> Type -> ErrorFun
+badArrayType arrayExpr arrayType expected = typecheck $
+  "got " ++ exprString arrayExpr ++ typeOfString arrayType ++
+  " expected array of " ++ typeString expected

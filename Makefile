@@ -1,6 +1,6 @@
 BUILD=build
 SHELL=/usr/bin/env bash
-GHCFLAGS= #-Wall
+GHCFLAGS=-Wall
 GHC=ghc
 
 SHELL_SCRIPTS=latc latc_x86_64
@@ -32,6 +32,7 @@ endef
 testGood: Latte
 	$(call test_examples,good,OK)
 	$(call test_examples,good/basic,OK)
+	$(call test_examples,good/arrays,OK)
 
 testBad: Latte
 	$(call test_examples,bad,ERROR)
@@ -65,10 +66,13 @@ $(BNFC_SOURCES): src/Latte.cf
 	mkdir -p $(BUILD) && \
 	cd $(BUILD) && \
 	bnfc -haskell ../$< && \
-	happy -gca ParLatte.y && \
+	happy -gca ParLatte.y -iHappyOutput && \
 	alex -g LexLatte.x
 	rm -f $(BUILD)/SkelLatte.hs && \
-	sed -i "/SkelLatte/d" $(BUILD)/TestLatte.hs
+	sed -i "/SkelLatte/d" $(BUILD)/TestLatte.hs # && \
+	# sed -i "s/\sid\s/ ident /" build/PrintLatte.hs && \
+	# sed -i "s/\sid,/ ident,/" build/PrintLatte.hs && \
+	# sed -i "s/\sid]/ ident]/" build/PrintLatte.hs
 
 pack:
 	tar czvf $(PACK_NAME) $(FILES_TO_PACK)

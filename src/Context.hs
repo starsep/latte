@@ -17,6 +17,7 @@ data ContextItem
   | CElse
   | CStmt Stmt
   | CParLex
+  | CFor Type Ident Expr
 
 inside :: String -> String
 inside str = "Inside: " ++ str
@@ -30,7 +31,7 @@ isNotStmt contextItem = case contextItem of
   _ -> True
 
 instance Show ContextItem where
-  show (CFun (FnDef outType i args body)) = "In function ‘" ++
+  show (CFun (FnDef outType i args _)) = "In function ‘" ++
     let typeOfArg (Arg t _) = t
         types = map typeOfArg args in
     typeString outType ++ " " ++ identString i ++ typesString types ++ "’:"
@@ -39,3 +40,5 @@ instance Show ContextItem where
   show CElse = inside "else"
   show (CStmt stmt) = "At: " ++ stmtString stmt
   show CParLex = "In parser/lexer:"
+  show (CFor t ident array) = inside $ "for (" ++ typeString t ++ " " ++
+    identString ident ++ " : " ++ exprString array ++ ")"

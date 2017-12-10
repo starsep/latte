@@ -51,6 +51,31 @@ typeOf q =
       return Bool
     EOr b1 b2 -> checkBExprOp b1 b2
     EAnd b1 b2 -> checkBExprOp b1 b2
+    EIndex index ->
+      case index of
+        Index expr index -> do
+          assertNumericExpr index
+          typeOfArray expr
+        IndexR index e -> do
+          assertNumericExpr e
+          let expr = EIndex index
+          typeOfArray expr
+    EArray t e -> do
+      assertArrayableType t
+      assertNumericExpr e
+      return $ Array t
+    ELength a -> do
+      void $ typeOfArray a
+      return Int
+
+typeOfArray :: Expr -> TCMonad Type
+typeOfArray expr = do
+  t <- typeOf expr
+  case t of
+    Array t' -> return t'
+    _ -> do
+      showError $ Errors.notArray expr t
+      return Void
 
 typeOfFun :: Ident -> TCMonad Type
 typeOfFun ident = do
@@ -91,6 +116,22 @@ assertNumericExpr expr = do
   case t of
     Int -> return ()
     _ -> showError $ Errors.nonNumeric expr t
+
+assertArrayableType :: Type -> TCMonad ()
+assertArrayableType t =
+  unless (isSimpleType t) $
+  case t of
+    Array t' -> assertArrayableType t'
+    _ -> showError $ Errors.arrayOfComplexType t
+
+isSimpleType :: Type -> Bool
+isSimpleType t = case t of
+  Int -> True
+  Bool -> True
+  Str -> True
+  Void -> False
+  Array _ -> False
+  Fun _ _ -> False
 
 checkNeg :: Expr -> TCMonad Type
 checkNeg expr = do
@@ -146,14 +187,14 @@ fnHeaderToFnType outType args =
 
 addTypedFnDef :: TypedFnDefs -> TopDef -> IO TypedFnDefs
 addTypedFnDef typed (FnDef outType ident args _) = do
-  let context = Context [] -- TODO
+  let context = Context []
   when (Map.member ident typed) $
     Errors.multipleFnDef ident context
   return $ Map.insert ident (fnHeaderToFnType outType args) typed
 
 assertCorrectMain :: TypedFnDefs -> IO ()
 assertCorrectMain typedFns = do
-  let context = Context [] -- TODO
+  let context = Context []
   when (Map.notMember (Ident "main") typedFns) $
     Errors.noMain context
   case typedFns ! Ident "main" of
@@ -261,6 +302,19 @@ typecheckStmtCase stmt = do
       dropContext
       addContext CElse
       typecheckStmt stmt2
+      dropContext
+    AssArray index expr -> do
+      t1 <- typeOf $ EIndex index
+      t2 <- typeOf expr
+      when (t1 /= t2) $
+        showError $ Errors.notMatchingTypeIndex t1 t2
+      return ()
+    For t ident array stmt' -> do
+      addContext $ CFor t ident array
+      arrayType <- typeOf array
+      when (arrayType /= Array t) $
+        showError $ Errors.badArrayType array arrayType t
+      typecheckBlock $ Block [Decl t [NoInit ident], stmt']
       dropContext
 
 typecheckStmt :: Stmt -> TCMonad ()
