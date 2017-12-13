@@ -80,5 +80,13 @@ pack:
 shellcheck:
 	shellcheck $(SHELL_SCRIPTS)
 
+coverage: GHCFLAGS=-fhpc
+
+coverage: clean test
+	mv Latte.tix $(BUILD) && \
+	cd $(BUILD) && \
+	hpc report Latte && \
+	hpc markup Latte
+
 clean:
-	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz
+	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz *.tix
