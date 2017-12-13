@@ -1,0 +1,4 @@
+int main() {
+  int x = foo(42);
+  return 0;
+}

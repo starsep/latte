@@ -1,0 +1,5 @@
+int main() {
+  int[] x = new int[12];
+  x.length = 42;
+  return 0;
+}

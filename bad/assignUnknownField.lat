@@ -1,0 +1,9 @@
+class Foo {
+  int x;
+}
+
+int main() {
+  Foo c = new Foo;
+  c.y = 42;
+  return 0;
+}

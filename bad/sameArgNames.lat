@@ -1,0 +1,9 @@
+int foo(int x, bool x) {
+  if (42 > 5) {
+    return x;
+  }
+}
+
+int main() {
+  return 0;
+}

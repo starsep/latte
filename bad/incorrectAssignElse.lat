@@ -1,0 +1,9 @@
+int main() {
+  int x = 5;
+  if (x > 42) {
+    x = 13;
+  } else {
+    x = "duck";
+  }
+  return 0;
+}

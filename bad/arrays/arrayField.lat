@@ -1,0 +1,5 @@
+int main() {
+  int[] a = new int[42];
+  int q = a.nonExistingField;
+  return 0;
+}

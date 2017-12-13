@@ -1,0 +1,7 @@
+int main() {
+  int[] a = new int[42];
+  for (string x : a) {
+    printString(x);
+  }
+  return 0;
+}

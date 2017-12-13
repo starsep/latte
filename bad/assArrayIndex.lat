@@ -1,0 +1,5 @@
+int main() {
+  int[] x = new int[42];
+  x[0] = "sss";
+  return 0;
+}

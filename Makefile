@@ -8,9 +8,11 @@ TEST_DIRECTORIES=good bad extensions gr5
 FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
 PACK_NAME=fc359081.tgz
 
-BINARIES=Latte TestLatte
-SOURCES=Compiler Context Errors Latte Print Typechecker TypecheckerState
-LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES)))
+BINARIES=TestLatte Latte
+FRONTEND_SOURCES=Context Errors ErrorUtils Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
+BACKEND_SOURCES=Compiler
+SOURCES=Latte $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
+LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) $(BUILD)/Frontend/Typechecker.hs-boot
 BNFC_SOURCES_FILES=AbsLatte.hs ErrM.hs LexLatte.hs \
 	ParLatte.hs PrintLatte.hs TestLatte.hs
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
@@ -29,15 +31,23 @@ define test_examples
 	done
 endef
 
+
 testGood: Latte
 	$(call test_examples,good,OK)
 	$(call test_examples,good/basic,OK)
 	$(call test_examples,good/arrays,OK)
+	$(call test_examples,good/struct,OK)
+	
+#$(call test_examples,good/objects1,OK)
+#$(call test_examples,good/objects2,OK)
+#$(call test_examples,good/virtual,OK)
+#$(call test_examples,good/hardcore,OK)
 
 testBad: Latte
 	$(call test_examples,bad,ERROR)
 	$(call test_examples,bad/semantic,ERROR)
 	$(call test_examples,bad/infinite_loop,ERROR)
+	$(call test_examples,bad/arrays,ERROR)
 
 define run_examples
 	@for e in $1/*.lat ; do \
@@ -55,12 +65,16 @@ runGood: good Latte
 runBad: bad Latte
 	-$(call run_examples,$<)
 
-$(BINARIES): %: $(BNFC_SOURCES) $(LINKED_SOURCES)
+TestLatte: $(BNFC_SOURCES) $(LINKED_SOURCES)
+	cd $(BUILD) && \
+	$(GHC) $(GHCFLAGS) -w --make $@.hs -o ../$@
+
+Latte: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
 	$(GHC) $(GHCFLAGS) --make $@.hs -o ../$@
 
 $(LINKED_SOURCES): $(BUILD)/%: src/%
-	ln -srf $^ $(BUILD)
+	ln -srf $^ -t $(BUILD)
 
 $(BNFC_SOURCES): src/Latte.cf
 	mkdir -p $(BUILD) && \
@@ -68,11 +82,6 @@ $(BNFC_SOURCES): src/Latte.cf
 	bnfc -haskell ../$< && \
 	happy -gca ParLatte.y -iHappyOutput && \
 	alex -g LexLatte.x
-	rm -f $(BUILD)/SkelLatte.hs && \
-	sed -i "/SkelLatte/d" $(BUILD)/TestLatte.hs # && \
-	# sed -i "s/\sid\s/ ident /" build/PrintLatte.hs && \
-	# sed -i "s/\sid,/ ident,/" build/PrintLatte.hs && \
-	# sed -i "s/\sid]/ ident]/" build/PrintLatte.hs
 
 pack:
 	tar czvf $(PACK_NAME) $(FILES_TO_PACK)

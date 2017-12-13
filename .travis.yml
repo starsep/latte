@@ -39,6 +39,5 @@ after_install:
  - alex --version
 
 script:
- - make
  - make shellcheck
- - make test
+ - make clean test

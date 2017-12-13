@@ -1,0 +1,6 @@
+int main() {
+  if (42) {
+    return 3;
+  }
+  return 0;
+}

@@ -1,0 +1,8 @@
+class Complex {
+  int field;
+}
+
+int main() {
+  Complex[] a = new Complex[42];
+  return 0;
+}

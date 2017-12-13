@@ -1,11 +1,12 @@
 module Print (
-  escapeChar, exprString, normalColor, numString, identString,
+  escapeChar, exprString, exprsString, exprOfTypeString,
+  classString, normalColor, numString, identString,
   typeOfString, typeString, typesString, stmtString) where
 
 import AbsLatte
-import PrintLatte
 import Data.Char
 import Data.List
+import PrintLatte
 
 escapeChar :: Char
 escapeChar = chr 27
@@ -24,9 +25,19 @@ typeString t =
 typesString :: [Type] -> String
 typesString t = concat $ ("(" : intersperse "," (map typeString t)) ++ [")"]
 
+classString :: Ident -> String
+classString className = "class " ++ typeString (ClassType className) 
+
 exprString :: Expr -> String
 exprString e =
   exprColor ++ printTree e ++ normalColor
+
+exprOfTypeString :: Expr -> Type -> String
+exprOfTypeString expr t =
+  exprString expr ++ typeOfString t
+
+exprsString :: [Expr] -> String
+exprsString e = concat $ ("(" : intersperse "," (map exprString e)) ++ [")"]
 
 stmtString :: Stmt -> String
 stmtString s =

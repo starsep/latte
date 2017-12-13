@@ -1,0 +1,8 @@
+class Foo {
+  int x;
+}
+
+int main() {
+  (Foo)null = 42;
+  return 0;
+}

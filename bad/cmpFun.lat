@@ -1,0 +1,6 @@
+int main() {
+  if (main == main) {
+    return 3;
+  }
+  return 0;
+}

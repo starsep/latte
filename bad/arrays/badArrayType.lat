@@ -1,0 +1,4 @@
+int main() {
+  int[] a = new boolean[42];
+  return 0;
+}

@@ -1,0 +1,5 @@
+int main() {
+  int x = 42;
+  x[0] = -2;
+  return 0;
+}

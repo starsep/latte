@@ -1,20 +1,37 @@
-module TypecheckerState (
-  Ident(Ident), TypedFnDefs, TCEnv, TCIdentState, TCDeclState, TCState, TCMonad,
-  getState, putState, getDecl, putDecl, getContext, putContext,
-  addContext, addContextStmt, dropContext
-) where
+module TypecheckerState where
 
 import AbsLatte
 import Context
-import Control.Monad.RWS (RWST, get, put, void)
+import Control.Monad
+import Control.Monad.RWS (RWST, ask, get, lift, put, void)
 import Data.Map (Map)
+import Errors
 
 type TypedFnDefs = Map Ident Type
-type TCEnv = (TypedFnDefs, Type)
-type TCIdentState = Map Ident (Bool, Type)
+type ClassDef = [ClassProp]
+type ClassDefs = Map Ident ClassDef
+type InheritanceTree = [(Ident, Ident)]
+type TCEnv = (TypedFnDefs, Type, ClassDefs, InheritanceTree)
+type TCIdentState = Map Ident Type
 type TCDeclState = [Ident]
 type TCState = (TCIdentState, TCDeclState, Context)
 type TCMonad = RWST TCEnv () TCState IO
+
+showError :: (Context -> IO ()) -> TCMonad ()
+showError f = do
+  context <- getContext
+  lift $ f context
+
+showErrorV :: (Context -> IO ()) -> TCMonad Type
+showErrorV f = do
+  _ <- showError f
+  return Void
+
+addDecl :: Ident -> TCMonad ()
+addDecl ident = do
+  (s, decl, context) <- get
+  when (ident `elem` decl) $ showError $ Errors.alreadyDecl ident
+  put (s, ident : decl, context)
 
 getState :: TCMonad TCIdentState
 getState = do
@@ -49,6 +66,26 @@ putContext newContext = do
   put (state, decl, newContext)
   return oldContext
 
+askTyped :: TCMonad TypedFnDefs
+askTyped = do
+  (typed, _, _, _) <- ask
+  return typed
+
+askReturn :: TCMonad Type
+askReturn = do
+  (_, ret, _, _) <- ask
+  return ret
+
+askClassDefs :: TCMonad ClassDefs
+askClassDefs = do
+  (_, _, classDefs, _) <- ask
+  return classDefs
+
+askInheritanceTree :: TCMonad InheritanceTree
+askInheritanceTree = do
+  (_, _, _, inheritanceTree) <- ask
+  return inheritanceTree
+
 addContext :: ContextItem -> TCMonad ()
 addContext contextItem = do
   (Context context) <- getContext
@@ -59,7 +96,6 @@ addContextStmt contextItem = do
   (Context context) <- getContext
   let contextNoStmt = filter isNotStmt context
   void $ putContext $ Context $ contextItem : contextNoStmt
-
 
 dropContext :: TCMonad ()
 dropContext = do

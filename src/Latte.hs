@@ -11,7 +11,7 @@ import ParLatte
 import AbsLatte
 import ErrM
 import Typechecker (typecheck)
-import Errors (parsing)
+import ErrorUtils (parsing)
 
 -- import System.Exit (die)
 -- doesn't work on ghc 7.6.3

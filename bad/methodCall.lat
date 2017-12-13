@@ -1,0 +1,11 @@
+class Foo {
+  void foo() {
+    printString("42");
+  }
+}
+
+int main() {
+  Foo x = new Foo;
+  x.foo(42);
+  return 0;
+}

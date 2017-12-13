@@ -1,0 +1,11 @@
+class Foo {
+  int bar() {
+    return 42;
+  }
+}
+
+int main() {
+  Foo f = new Foo;
+  f.bar = 12;
+  return 0;
+}
