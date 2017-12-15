@@ -13,8 +13,9 @@ FRONTEND_SOURCES=Context Errors ErrorUtils Print Typechecker TypecheckerPure Typ
 BACKEND_SOURCES=Compiler
 SOURCES=Latte $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) $(BUILD)/Frontend/Typechecker.hs-boot
-BNFC_SOURCES_FILES=AbsLatte.hs ErrM.hs LexLatte.hs \
-	ParLatte.hs PrintLatte.hs TestLatte.hs
+BNFC_MODULES=AbsLatte ErrM LexLatte ParLatte PrintLatte TestLatte
+HPC_EXCLUDES=$(addprefix --exclude=,$(BNFC_MODULES))
+BNFC_SOURCES_FILES=$(addsuffix .hs,$(BNFC_MODULES))
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
 .PHONY: all clean pack test testGood testBad run runGood runBad 
@@ -95,7 +96,7 @@ coverage: clean test
 	mv Latte.tix $(BUILD) && \
 	cd $(BUILD) && \
 	hpc report Latte && \
-	hpc markup Latte
+	hpc markup Latte $(HPC_EXCLUDES)
 
 clean:
 	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz *.tix
