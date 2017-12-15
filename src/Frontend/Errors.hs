@@ -66,9 +66,17 @@ methodCallOn object t name args = typecheck $ "trying to invoke method " ++
   identString name ++ " on " ++ exprString object ++ typeOfString t ++
   "with args: " ++ exprsString args
 
+multipleProps :: Ident -> ErrorFun
+multipleProps ident =
+    typecheck $ "multiple definitions of property " ++ identString ident
+
 multipleFnDef :: Ident -> ErrorFun
 multipleFnDef ident =
     typecheck $ "multiple definitions of function " ++ identString ident
+
+multipleClass :: Ident -> ErrorFun
+multipleClass ident =
+    typecheck $ "multiple definitions of " ++ classString ident
 
 nullOfType :: Type -> ErrorFun
 nullOfType t = typecheck $ "null of non-class type " ++ typeString t

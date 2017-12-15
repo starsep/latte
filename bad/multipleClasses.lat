@@ -1,0 +1,15 @@
+class Foo {
+  int x;
+}
+
+class Bar {
+  int z;
+}
+
+class Foo {
+  int y;
+}
+
+int main() {
+  return 0;
+}

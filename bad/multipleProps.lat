@@ -1,0 +1,8 @@
+class Foo {
+  int k;
+  void k() {}
+}
+
+int main() {
+  return 0;
+}

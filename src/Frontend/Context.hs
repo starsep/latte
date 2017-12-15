@@ -11,7 +11,8 @@ instance Show Context where
   show (Context (x : xs)) = show x ++ "\n" ++ show (Context xs)
 
 data ContextItem
-  = CFun TopDef
+  = CFun Type Ident [Arg]
+  | CClass Ident
   | CWhile Expr
   | CIf Expr
   | CElse
@@ -31,10 +32,11 @@ isNotStmt contextItem = case contextItem of
   _ -> True
 
 instance Show ContextItem where
-  show (CFun (FnDef outType i args _)) = "In function ‘" ++
+  show (CFun outType i args) = "In function ‘" ++
     let typeOfArg (Arg t _) = t
         types = map typeOfArg args in
     typeString outType ++ " " ++ identString i ++ typesString types ++ "’:"
+  show (CClass name) = "In " ++ classString name ++ ":"
   show (CWhile bExpr) = insideExpr "while" bExpr
   show (CIf bExpr) = insideExpr "if" bExpr
   show CElse = inside "else"

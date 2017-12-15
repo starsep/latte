@@ -5,6 +5,7 @@ import Control.Monad
 import Control.Monad.RWS (get, lift, put, runRWST)
 import qualified Data.Map as Map
 import Data.Map ((!))
+import Data.Maybe
 import qualified Errors
 import PrintLatte (printTree)
 import Data.Int
@@ -284,13 +285,31 @@ addFunctionArgToState context state (Arg t argIdent) = do
 
 type TopDefScope = (TypedFnDefs, ClassDefs, InheritanceTree)
 
+typecheckField :: Type -> Ident -> Context -> IO ()
+typecheckField t name context =
+  when (t == Void) $
+    Errors.voidVariable name context
+
+typecheckMethod :: Type -> Ident -> [Arg] -> Block -> IO ()
+typecheckMethod out name args body = return ()
+
+typecheckProp :: Context -> ClassProp -> IO ()
+typecheckProp _ (Method out name args body) = typecheckMethod out name args body
+typecheckProp context (Field t name) = typecheckField t name context
+
 typecheckClass :: Ident -> [ClassProp] -> TopDefScope -> IO ()
-typecheckClass name props scope = return ()
+typecheckClass name props scope = do
+  let context = Context [CClass name]
+      propNames = map propName props
+      duplicate = firstNotUnique propNames
+  when (isJust duplicate) $
+    Errors.multipleProps (fromJust duplicate) context
+  forM_ props (typecheckProp context) 
 
 typecheckFun :: (Type, Ident, [Arg], Block) -> TopDefScope -> IO ()
 typecheckFun (outType, i, args, body) (typed, classDefs, inhTree) = do
   let fun = FnDef outType i args body
-      context = Context [CFun fun]
+      context = Context [CFun outType i args]
   funState <- foldM (addFunctionArgToState context) Map.empty args
   let initState = (funState, [], context)
       initEnv = (typed, outType, classDefs, inhTree)
@@ -306,18 +325,19 @@ typecheckTopDef topDef scope = case topDef of
 
 addTypedFnDef :: TypedFnDefs -> TopDef -> IO TypedFnDefs
 addTypedFnDef typed (FnDef outType ident args _) = do
-  let context = Context []
   when (Map.member ident typed) $
-    Errors.multipleFnDef ident context
+    Errors.multipleFnDef ident $ Context []
   return $ Map.insert ident (fnHeaderToFnType outType args) typed
 addTypedFnDef typed _ = return typed
 
 addClassDef :: (ClassDefs, InheritanceTree) ->
   TopDef -> IO (ClassDefs, InheritanceTree)
-addClassDef (classDefs, inhTree) (ClassDef ident props) =
+addClassDef (classDefs, inhTree) (ClassDef ident props) = do
+  when (Map.member ident classDefs) $
+    Errors.multipleClass ident $ Context []
   return (Map.insert ident props classDefs, inhTree)
 addClassDef (classDefs, inhTree) (ClassDefE ident extends props) =
-  return (Map.insert ident props classDefs, (ident, extends) : inhTree)
+  addClassDef (classDefs, (ident, extends) : inhTree) (ClassDef ident props)
 addClassDef acc _ = return acc
 
 typecheck :: Program -> IO ()

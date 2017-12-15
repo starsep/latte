@@ -88,3 +88,15 @@ standardFunctions =
 propName :: ClassProp -> Ident
 propName (Field _ ident) = ident
 propName (Method _ ident _ _) = ident
+
+checkUnique :: [Ident] -> Ident -> Bool
+checkUnique idents ident =
+    length (filter (== ident) idents) > 1
+
+firstNotUnique :: [Ident] -> Maybe Ident
+firstNotUnique idents =
+    let duplicates = filter (checkUnique idents) idents in
+    if null duplicates then
+      Nothing
+    else
+      Just $ head duplicates
