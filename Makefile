@@ -10,7 +10,7 @@ PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
 FRONTEND_SOURCES=Context Errors ErrorUtils Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
-BACKEND_SOURCES=Compiler
+BACKEND_SOURCES=Compiler Assembly AsmStandard AsmStmt
 SOURCES=Latte $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) $(BUILD)/Frontend/Typechecker.hs-boot
 BNFC_MODULES=AbsLatte ErrM LexLatte ParLatte PrintLatte TestLatte
@@ -27,7 +27,7 @@ test: testGood testBad
 define test_examples
 	@for e in $1/*.lat ; do \
 		echo -e "\e[93m----------- TESTING\e[96m $$e \e[93m--------------\e[0m"; \
-		./Latte "$$e" 2>&1 | tee build/output ; \
+		./latc "$$e" 2>&1 | tee build/output ; \
 		[ "x$$(head -n 1 build/output)" = "x$2" ] || exit 1;  \
 	done
 endef

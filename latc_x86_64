@@ -1,2 +1,13 @@
 #!/usr/bin/env bash
-./Latte "$@"
+
+set -e
+
+SOURCE="$1"
+OUTPUT=${SOURCE%.lat}
+ASSEMBLY="$OUTPUT".asm
+TMP="build/tmp.o"
+
+./Latte "$SOURCE" > "$ASSEMBLY"
+nasm -f elf64 -F dwarf -g "$ASSEMBLY" -o "$TMP"
+gcc -o "$OUTPUT" -g "$TMP"
+rm -f "$TMP"

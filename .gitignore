@@ -1,3 +1,8 @@
+*
+!*.*
+!*/
+!Makefile
+
 *.tgz
 *.tar.gz
 *.x
@@ -15,3 +20,5 @@ TestLatte
 dist
 testing
 *.tix
+a.out
+*.asm

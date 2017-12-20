@@ -7,6 +7,7 @@ import System.Environment (getArgs, getExecutablePath)
 import System.FilePath.Posix (takeBaseName)
 import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
 import Context
+import Compiler
 import ParLatte
 import AbsLatte
 import ErrM
@@ -36,9 +37,6 @@ readSource :: String -> IO String
 readSource filename = do
     file <- openFile filename ReadMode
     hGetContents file
-
-compiler :: Bool -> String -> Program -> String
-compiler optimizeOn basename prog = "Hello Compiler!"
 
 main :: IO ()
 main = do
