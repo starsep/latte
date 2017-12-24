@@ -9,25 +9,41 @@ emitHeader = do
   tell [Global "main", Empty]
   emitLibcExterns
   tell [Empty]
-  emitMacros
+  -- emitMacros
   emitDataSection
 
 emitLibcExterns :: CMonad ()
 emitLibcExterns =
   tell $ map Extern ["printf", "scanf"]
 
-emitMacros :: CMonad ()
-emitMacros =
-  alignMacro
+-- emitMacros :: CMonad ()
+-- emitMacros = do
+--   alignMacro
+  -- pushMacro
+  -- popMacro
 
-alignMacro :: CMonad ()
-alignMacro = tell [
-  CustomString "%macro alignCall 1",
-  Mov "r15" "rsp",
-  And "rsp" "-16",
-  Custom "call" ["%1"],
-  Mov "rsp" "r15",
-  CustomString "%endmacro"]
+-- alignMacro :: CMonad ()
+-- alignMacro = tell [
+--   CustomString "%macro alignCall 1",
+--   Mov "r15" "rsp",
+--   And "rsp" "-16",
+--   Custom "call" ["%1"],
+--   Mov "rsp" "r15",
+--   CustomString "%endmacro"]
+
+-- pushMacro :: CMonad ()
+-- pushMacro = tell [
+--   CustomString "%macro pushQ 1",
+--   Sub "rsp" "8",
+--   Mov "qword[rsp]" "%1",
+--   CustomString "%endmacro"]
+--
+-- popMacro :: CMonad ()
+-- popMacro = tell [
+--   CustomString "%macro popQ 1",
+--   Mov "%1" "qword[rsp]",
+--   Add "rsp" "8",
+--   CustomString "%endmacro"]
 
 emitDataSection :: CMonad ()
 emitDataSection = do
@@ -48,11 +64,25 @@ stringPatterns = [
   ("strPattern", "%s"),
   ("strPatternNl", "%s\\n")]
 
+funHeader :: String -> CMonad ()
+funHeader name =
+  tell [
+    Label name,
+    Push "rbp",
+    Mov "rbp" "rsp"]
+
+funFooter :: String -> CMonad ()
+funFooter name =
+  tell [
+    Label $ name ++ "$end",
+    Pop "rbp",
+    Ret]
+
 funImpl :: String -> AsmStmts -> CMonad ()
 funImpl name body = do
-  tell [Label name]
+  funHeader name
   tell body
-  tell [Ret]
+  funFooter name
 
 printImpl :: String -> String -> CMonad ()
 printImpl name pat = funImpl name [

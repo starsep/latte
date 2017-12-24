@@ -21,21 +21,12 @@ compile prog = do
 
 emitProgram :: Program -> CMonad ()
 emitProgram (Program topdefs) = do
-  funImpl "main" [
-    Push "rbp",
-    Mov "rbp" "rsp",
-    Call "functionMain",
-    Xor "rax" "rax",
-    Leave]
   forM_ topdefs emitTopDef
 
 emitTopDef :: TopDef -> CMonad ()
-emitTopDef (FnDef Int (Ident "main") [] block) = do
-  tell [Label "functionMain"]
+emitTopDef (FnDef _ (Ident name) args block) = do
+  funHeader name
   emitBlock block
-  tell [AsmStmt.Ret]
+  funFooter name
 
 emitTopDef _ = return ()
-
-emitBlock :: Block -> CMonad ()
-emitBlock (Block stmts) = forM_ stmts emitStatement
