@@ -1,0 +1,4 @@
+int main() {
+  printInt(42 - 31 + 5 + 555);
+  return 0;
+}

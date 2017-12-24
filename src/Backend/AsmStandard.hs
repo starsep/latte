@@ -1,28 +1,45 @@
 module AsmStandard where
 
 import AsmStmt
+import CompilerState
+import Control.Monad.RWS (tell)
 
-libcExterns :: AsmStmts
-libcExterns =
-  let addExtern stmts x = stmts ++ [Extern x] in
-  foldl addExtern [] standardDependencies
+emitHeader :: CMonad ()
+emitHeader = do
+  tell [Global "main", Empty]
+  emitLibcExterns
+  tell [Empty]
+  emitMacros
+  emitDataSection
 
-standardDependencies :: [String]
-standardDependencies = [
-  "printf",
-  "scanf"]
+emitLibcExterns :: CMonad ()
+emitLibcExterns =
+  tell $ map Extern ["printf", "scanf"]
 
-dataSection :: AsmStmts
-dataSection =
-  [SectionData] ++
-  foldl addStringPattern [] stringPatterns
+emitMacros :: CMonad ()
+emitMacros =
+  alignMacro
+
+alignMacro :: CMonad ()
+alignMacro = tell [
+  CustomString "%macro alignCall 1",
+  Mov "r15" "rsp",
+  And "rsp" "-16",
+  Custom "call" ["%1"],
+  Mov "rsp" "r15",
+  CustomString "%endmacro"]
+
+emitDataSection :: CMonad ()
+emitDataSection = do
+  tell [SectionData]
+  tell $ foldl addStringPattern [] stringPatterns
 
 addStringPattern :: AsmStmts -> (String, String) -> AsmStmts
-addStringPattern acc (name, pattern) =
-  acc ++ [DataDecl name DataByte (wrapPattern pattern)]
+addStringPattern acc (name, pat) =
+  acc ++ [DataDecl name DataByte (wrapPattern pat)]
 
 wrapPattern :: String -> String
-wrapPattern pattern = "`" ++ pattern ++ "\\0`"
+wrapPattern pat = "`" ++ pat ++ "\\0`"
 
 stringPatterns :: [(String, String)]
 stringPatterns = [
@@ -31,49 +48,46 @@ stringPatterns = [
   ("strPattern", "%s"),
   ("strPatternNl", "%s\\n")]
 
-funImpl :: String -> AsmStmts -> AsmStmts
-funImpl name body =
-  [Label name] ++
-  body ++
-  [Ret]
+funImpl :: String -> AsmStmts -> CMonad ()
+funImpl name body = do
+  tell [Label name]
+  tell body
+  tell [Ret]
 
-printImpl :: String -> String -> AsmStmts
-printImpl name pattern = funImpl name [
-  Mov "rdi" pattern,
-  Mov "rsi" "42",
-  -- Pop "rsi",
-  And "rsp" "-16",
+printImpl :: String -> String -> CMonad ()
+printImpl name pat = funImpl name [
+  Mov "rdi" pat,
   Call "printf"]
 
-readImpl :: String -> String -> AsmStmts
-readImpl name pattern = funImpl name [
-  Mov "rdi" pattern,
+readImpl :: String -> String -> CMonad ()
+readImpl name pat = funImpl name [
+  Mov "rdi" pat,
   Pop "rsi",
   Call "scanf"]
 
-printInt :: AsmStmts
+printInt :: CMonad ()
 printInt = printImpl "printInt" "intPatternNl"
 
-printString :: AsmStmts
+printString :: CMonad ()
 printString = printImpl "printString" "strPatternNl"
 
-errorImpl :: AsmStmts
+errorImpl :: CMonad ()
 errorImpl = funImpl "error" [
   Mov "eax" "1",
   Mov "ebx" "1",
   KernelCall]
 
-readInt :: AsmStmts
+readInt :: CMonad ()
 readInt = readImpl "readInt" "intPattern"
 
-readString :: AsmStmts
+readString :: CMonad ()
 readString = readImpl "readString" "strPattern"
 
-standardImpl :: AsmStmts
-standardImpl = concat [
-  [SectionText],
-  printInt,
-  printString,
-  errorImpl,
-  readInt,
-  readString]
+emitStandardImpl :: CMonad ()
+emitStandardImpl = do
+  tell [SectionText]
+  printInt
+  printString
+  errorImpl
+  readInt
+  readString

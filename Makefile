@@ -10,15 +10,16 @@ PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
 FRONTEND_SOURCES=Context Errors ErrorUtils Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
-BACKEND_SOURCES=Compiler Assembly AsmStandard AsmStmt
+BACKEND_SOURCES=Compiler AsmStandard AsmStmt CExpression CompilerState CStatement
 SOURCES=Latte $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
-LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) $(BUILD)/Frontend/Typechecker.hs-boot
+LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
+			   $(BUILD)/Frontend/Typechecker.hs-boot
 BNFC_MODULES=AbsLatte ErrM LexLatte ParLatte PrintLatte TestLatte
 HPC_EXCLUDES=$(addprefix --exclude=,$(BNFC_MODULES))
 BNFC_SOURCES_FILES=$(addsuffix .hs,$(BNFC_MODULES))
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
-.PHONY: all clean pack test testGood testBad run runGood runBad 
+.PHONY: all clean pack test testGood testBad
 
 all: $(BINARIES)
 
@@ -31,6 +32,10 @@ define test_examples
 		[ "x$$(head -n 1 build/output)" = "x$2" ] || exit 1;  \
 	done
 endef
+
+# if [ "xOK" = "x$2" ]; then \
+#  ./$${e%.lat}; \
+# fi; \
 
 
 testGood: Latte
@@ -49,22 +54,6 @@ testBad: Latte
 	$(call test_examples,bad/semantic,ERROR)
 	$(call test_examples,bad/infinite_loop,ERROR)
 	$(call test_examples,bad/arrays,ERROR)
-
-define run_examples
-	@for e in $1/*.lat ; do \
-		echo -e "\e[93m----------- RUNNING\e[96m $$e \e[93m--------------\e[0m"; \
-		./Latte "$$e" ; \
-	done
-endef
-
-run: runGood runBad
-
-runGood: good Latte
-	$(call run_examples,good)
-	$(call run_examples,good/basic)
-
-runBad: bad Latte
-	-$(call run_examples,$<)
 
 TestLatte: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \

@@ -1,5 +1,7 @@
 module AsmStmt where
 
+import Data.List
+
 type AsmStmts = [AsmStmt]
 
 printAsm :: AsmStmts -> String
@@ -10,9 +12,13 @@ printAsm = foldl (\acc x ->
   ) ""
 
 data AsmStmt
-  = And String String
+  = Add String String
+  | And String String
   | Call String
+  | Custom String [String]
+  | CustomString String
   | DataDecl String DataSize String
+  | Empty
   | Extern String
   | Global String
   | Label String
@@ -24,31 +30,41 @@ data AsmStmt
   | Ret
   | SectionData
   | SectionText
+  | Sub String String
   | Xor String String
 
 indent :: AsmStmt -> Bool
 indent stmt = case stmt of
-  And _ _ -> True
-  Call _ -> True
+  Add{} -> True
+  And{} -> True
+  Call{} -> True
+  Custom{} -> True
+  CustomString{} -> False
   DataDecl{} -> False
-  Extern _ -> False
-  Global _ -> False
-  Label _ -> False
+  Empty -> False
+  Extern{} -> False
+  Global{} -> False
+  Label{} -> False
   Leave -> True
   KernelCall -> True
-  Mov _ _ -> True
-  Pop _ -> True
-  Push _ -> True
+  Mov{} -> True
+  Pop{} -> True
+  Push{} -> True
   Ret -> True
   SectionData -> False
   SectionText -> False
-  Xor _ _ -> True
+  Sub{} -> True
+  Xor{} -> True
 
 instance Show AsmStmt where
+  show (Add dest src) = "add " ++ dest ++ ", " ++ src
   show (And left right) = "and " ++ left ++ ", " ++ right
-  show (Call name) = "call " ++ name
+  show (Call name) = "alignCall " ++ name
+  show (Custom op args) = op ++ " " ++ intercalate ", " args
+  show (CustomString s) = s
   show (DataDecl name size content) =
     name ++ " " ++ show size ++ " " ++ content
+  show Empty = ""
   show (Extern name) = "extern " ++ name
   show (Global name) = "global " ++ name
   show (Label name) = name ++ ":"
@@ -60,6 +76,7 @@ instance Show AsmStmt where
   show Ret = "ret"
   show SectionData = "\nsection .data"
   show SectionText = "\nsection .text"
+  show (Sub dest src) = "sub " ++ dest ++ ", " ++ src
   show (Xor left right) = "xor " ++ left ++ ", " ++ right
 
 data DataSize
