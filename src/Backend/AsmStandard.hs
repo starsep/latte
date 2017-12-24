@@ -14,7 +14,7 @@ emitHeader = do
 
 emitLibcExterns :: CMonad ()
 emitLibcExterns =
-  tell $ map Extern ["printf", "scanf"]
+  tell $ map Extern ["printf", "puts", "scanf"]
 
 -- emitMacros :: CMonad ()
 -- emitMacros = do
@@ -61,8 +61,7 @@ stringPatterns :: [(String, String)]
 stringPatterns = [
   ("intPattern", "%d"),
   ("intPatternNl", "%d\\n"),
-  ("strPattern", "%s"),
-  ("strPatternNl", "%s\\n")]
+  ("strPattern", "%s")]
 
 funHeader :: String -> CMonad ()
 funHeader name =
@@ -84,28 +83,22 @@ funImpl name body = do
   tell body
   funFooter name
 
-printImpl :: String -> String -> CMonad ()
-printImpl name pat = funImpl name [
-  Mov "rdi" pat,
-  Call "printf"]
-
-readImpl :: String -> String -> CMonad ()
-readImpl name pat = funImpl name [
-  Mov "rdi" pat,
-  Pop "rsi",
-  Call "scanf"]
-
 printInt :: CMonad ()
-printInt = printImpl "printInt" "intPatternNl"
-
-printString :: CMonad ()
-printString = printImpl "printString" "strPatternNl"
+printInt = funImpl "printInt" [
+  Mov "rdi" "intPatternNl",
+  Call "printf"]
 
 errorImpl :: CMonad ()
 errorImpl = funImpl "error" [
   Mov "eax" "1",
   Mov "ebx" "1",
   KernelCall]
+
+readImpl :: String -> String -> CMonad ()
+readImpl name pat = funImpl name [
+  Mov "rdi" pat,
+  Pop "rsi",
+  Call "scanf"]
 
 readInt :: CMonad ()
 readInt = readImpl "readInt" "intPattern"
@@ -117,7 +110,6 @@ emitStandardImpl :: CMonad ()
 emitStandardImpl = do
   tell [SectionText]
   printInt
-  printString
   errorImpl
   readInt
   readString
