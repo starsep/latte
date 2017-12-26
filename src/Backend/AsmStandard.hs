@@ -33,3 +33,14 @@ funFooter = do
 
 argRegisters :: [String]
 argRegisters = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+
+preserveRegisters :: [String]
+preserveRegisters =
+  ["rbx", "rsp", "rbp", "r12", "r13", "r14", "r15"]
+
+scratchRegisters :: [String]
+scratchRegisters =
+  ["rax", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"]
+
+registers :: [String]
+registers = preserveRegisters ++ scratchRegisters

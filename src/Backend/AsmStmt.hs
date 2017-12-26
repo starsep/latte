@@ -34,6 +34,7 @@ data AsmStmt
   | SectionText
   | Sub String String
   | Xor String String
+  deriving (Eq)
 
 indent :: AsmStmt -> Bool
 indent stmt = case stmt of
@@ -77,6 +78,7 @@ instance Show AsmStmt where
 
 data DataSize
   = DataByte
+  deriving (Eq)
 
 instance Show DataSize where
   show DataByte = "db"

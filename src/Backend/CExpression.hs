@@ -55,7 +55,7 @@ emitExpression q = case q of
   EArray _ num -> emitEApp (Ident "__new") [num]
   Neg expr -> do
     emitExpression expr
-    tell [Xor "rax" "rax", Pop "rdi", Sub "rax" "rdi", Push "rax"]
+    tell [Pop "rax", Custom "neg" ["rax"], Push "rax"]
   Not expr -> do
     emitExpression expr
     tell [Pop "rax", Xor "rax" "1", Push "rax"]

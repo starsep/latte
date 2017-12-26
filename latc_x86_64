@@ -2,12 +2,30 @@
 
 set -e
 
+CC=gcc
+POSITIONAL=()
+FLAGS=()
+
+while [[ $# -gt 0 ]] ; do
+  case $1 in
+    -*)
+      FLAGS+=("$1")
+      shift
+      ;;
+    *)
+      POSITIONAL+=("$1")
+      shift
+      ;;
+  esac
+done
+set -- "${POSITIONAL[@]}"
+
 SOURCE="$1"
 OUTPUT=${SOURCE%.lat}
 ASSEMBLY="$OUTPUT".asm
 TMP="build/tmp.o"
 
-./Latte "$SOURCE" > "$ASSEMBLY"
+./Latte "$SOURCE" "${FLAGS[@]}" > "$ASSEMBLY"
 nasm -f elf64 -F dwarf -g "$ASSEMBLY" -o "$TMP"
-gcc -o "$OUTPUT" -g lib/runtime.o "$TMP"
+"$CC" -o "$OUTPUT" -g lib/runtime.o "$TMP"
 rm -f "$TMP"
