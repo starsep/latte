@@ -25,8 +25,6 @@ data AsmStmt
   | Global String
   | Jmp String
   | Label String
-  | Leave
-  | KernelCall
   | Mov String String
   | Mul String
   | Or String String
@@ -68,8 +66,6 @@ instance Show AsmStmt where
   show (Global name) = "global " ++ name
   show (Jmp label) = "jmp " ++ label
   show (Label name) = name ++ ":"
-  show Leave = "leave"
-  show KernelCall = "int 0x80"
   show (Mov dest src) = showBinOp "mov" dest src
   show (Mul arg) = "imul " ++ arg
   show (Or dest src) = showBinOp "or" dest src

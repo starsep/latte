@@ -9,11 +9,11 @@ FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
 PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
-FRONTEND_SOURCES=Context Errors ErrorUtils Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
+FRONTEND_SOURCES=Context Errors Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
 BACKEND_SOURCES=Compiler AsmStandard AsmStmt CExpression CompilerState CStatement
 SOURCES=Latte $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
-			   $(BUILD)/Frontend/Typechecker.hs-boot
+			   $(BUILD)/Frontend/Typechecker.hs-boot $(BUILD)/Frontend/Print.hs-boot
 BNFC_MODULES=AbsLatte ErrM LexLatte ParLatte PrintLatte TestLatte
 HPC_EXCLUDES=$(addprefix --exclude=,$(BNFC_MODULES))
 BNFC_SOURCES_FILES=$(addsuffix .hs,$(BNFC_MODULES))

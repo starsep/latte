@@ -1,7 +1,7 @@
 module Context (Context(..), ContextItem(..), isNotStmt) where
 
 import AbsLatte
-import Print
+import {-# SOURCE #-} Print
 
 newtype Context = Context [ContextItem]
 

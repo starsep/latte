@@ -1,7 +1,6 @@
 module Errors where
 
 import AbsLatte
-import ErrorUtils
 import Print
 
 alreadyDecl :: Ident -> ErrorFun
