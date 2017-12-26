@@ -59,7 +59,7 @@ TestLatte: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
 	$(GHC) $(GHCFLAGS) -w --make $@.hs -o ../$@
 
-Latte: $(BNFC_SOURCES) $(LINKED_SOURCES)
+Latte: $(BNFC_SOURCES) $(LINKED_SOURCES) lib/runtime.o
 	cd $(BUILD) && \
 	$(GHC) $(GHCFLAGS) --make $@.hs -o ../$@
 
@@ -72,6 +72,9 @@ $(BNFC_SOURCES): src/Latte.cf
 	bnfc -haskell ../$< && \
 	happy -gca ParLatte.y -iHappyOutput && \
 	alex -g LexLatte.x
+
+lib/runtime.o: lib/runtime.c
+	gcc -c -o $@ $<
 
 pack:
 	tar czvf $(PACK_NAME) $(FILES_TO_PACK)
@@ -88,4 +91,4 @@ coverage: clean test
 	hpc markup Latte $(HPC_EXCLUDES)
 
 clean:
-	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz *.tix
+	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz *.tix lib/runtime.o

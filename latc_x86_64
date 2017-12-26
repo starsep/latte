@@ -9,5 +9,5 @@ TMP="build/tmp.o"
 
 ./Latte "$SOURCE" > "$ASSEMBLY"
 nasm -f elf64 -F dwarf -g "$ASSEMBLY" -o "$TMP"
-gcc -o "$OUTPUT" -g "$TMP"
+gcc -o "$OUTPUT" -g lib/runtime.o "$TMP"
 rm -f "$TMP"

@@ -76,6 +76,6 @@ emitEApp (Ident "printInt") [arg] = do
 
 emitEApp (Ident "printString") [arg] = do
   emitExpression arg
-  tell [Pop "rdi", Call "puts"]
+  tell [Pop "rdi", Call "printString"]
 
 emitEApp _ _ = return () -- TODO

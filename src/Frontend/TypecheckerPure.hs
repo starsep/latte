@@ -85,6 +85,10 @@ standardFunctions =
     (Ident "readString", Fun Str [])
   ]
 
+standardFunctionsNames :: [String]
+standardFunctionsNames =
+  map (\(Ident name, _) -> name) $ Map.toList standardFunctions
+
 propName :: ClassProp -> Ident
 propName (Field _ ident) = ident
 propName (Method _ ident _ _) = ident

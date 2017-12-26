@@ -16,7 +16,6 @@ compiler optimizeOn basename prog =
 compile :: Program -> CMonad ()
 compile prog = do
   emitHeader
-  emitStandardImpl
   emitProgram prog
 
 emitProgram :: Program -> CMonad ()
