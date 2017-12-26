@@ -1,8 +1,10 @@
 module CExpression where
 
 import AbsLatte
+import AsmStandard
 import AsmStmt
 import CompilerState
+import Control.Monad
 import Control.Monad.RWS (tell)
 
 binaryOp :: Expr -> Expr ->
@@ -40,10 +42,17 @@ emitMulOp e1 e2 mulOp = do
 
 emitExpression :: Expr -> CMonad ()
 emitExpression q = case q of
-  EApp ident args -> emitEApp ident args
+  ENull _ -> tell [Push "0"]
+  EApp ident args -> do
+    emitEApp ident args
+    let argsToPop = length args - 6
+    when (argsToPop > 0) $
+      tell [Add "rsp" $ show $ argsToPop * 8]
+    tell [Push "rax"]
   ELitInt number -> tell [Push $ show number]
   ELitTrue -> tell [Push "1"]
   ELitFalse -> tell [Push "0"]
+  EArray _ num -> emitEApp (Ident "__new") [num]
   Neg expr -> do
     emitExpression expr
     tell [Xor "rax" "rax", Pop "rdi", Sub "rax" "rdi", Push "rax"]
@@ -66,16 +75,18 @@ emitExpression q = case q of
       Custom (relOpToAsm op) ["al"],
       Custom "movzx" ["eax", "al"],
       Push "rax"]
-  EString s -> return () -- TODO
   _ -> return () -- TODO
 
 emitEApp :: Ident -> [Expr] -> CMonad ()
-emitEApp (Ident "printInt") [arg] = do
-  emitExpression arg
-  tell [Pop "rsi", Call "printInt"]
+emitEApp (Ident name) args = emitEApp' name args 0
 
-emitEApp (Ident "printString") [arg] = do
+emitEApp' :: String -> [Expr] -> Int -> CMonad ()
+emitEApp' name [] _ = tell [Call name]
+emitEApp' name args 6 = do
+  let revArgs = reverse args
+  forM_ revArgs emitExpression
+  emitEApp' name [] 0
+emitEApp' name (arg:args) nth = do
   emitExpression arg
-  tell [Pop "rdi", Call "printString"]
-
-emitEApp _ _ = return () -- TODO
+  tell [Pop $ argRegisters !! nth]
+  emitEApp' name args $ nth + 1

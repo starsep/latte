@@ -10,7 +10,7 @@ import Control.Monad.RWS (runRWS, tell)
 
 compiler :: Bool -> String -> Program -> String
 compiler optimizeOn basename prog =
-  let (_, _, output) = runRWS (compile prog) () () in
+  let (_, _, output) = runRWS (compile prog) () "" in
   printAsm output
 
 compile :: Program -> CMonad ()
@@ -24,8 +24,9 @@ emitProgram (Program topdefs) = do
 
 emitTopDef :: TopDef -> CMonad ()
 emitTopDef (FnDef _ (Ident name) args block) = do
-  funHeader name
+  putName name
+  funHeader
   emitBlock block
-  funFooter name
+  funFooter
 
 emitTopDef _ = return ()

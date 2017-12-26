@@ -20,7 +20,7 @@ data AsmStmt
   | CustomString String
   | DataDecl String DataSize String
   | Divide String
-  | Empty
+  | EmptyLine
   | Extern String
   | Global String
   | Jmp String
@@ -30,7 +30,6 @@ data AsmStmt
   | Or String String
   | Pop String
   | Push String
-  | Ret
   | SectionData
   | SectionText
   | Sub String String
@@ -40,7 +39,7 @@ indent :: AsmStmt -> Bool
 indent stmt = case stmt of
   CustomString{} -> False
   DataDecl{} -> False
-  Empty -> False
+  EmptyLine -> False
   Extern{} -> False
   Global{} -> False
   Label{} -> False
@@ -61,7 +60,7 @@ instance Show AsmStmt where
   show (DataDecl name size content) =
     name ++ " " ++ show size ++ " " ++ content
   show (Divide divisor) = "idiv " ++ divisor
-  show Empty = ""
+  show EmptyLine = ""
   show (Extern name) = "extern " ++ name
   show (Global name) = "global " ++ name
   show (Jmp label) = "jmp " ++ label
@@ -71,7 +70,6 @@ instance Show AsmStmt where
   show (Or dest src) = showBinOp "or" dest src
   show (Pop dest) = "pop " ++ dest
   show (Push src) = "push qword " ++ src
-  show Ret = "ret"
   show SectionData = "\nsection .data"
   show SectionText = "\nsection .text"
   show (Sub dest src) = showBinOp "sub" dest src

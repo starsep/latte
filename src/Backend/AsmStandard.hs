@@ -7,30 +7,29 @@ import TypecheckerPure (standardFunctionsNames)
 
 emitHeader :: CMonad ()
 emitHeader = do
-  tell [Global "main", Empty]
+  tell [Global "main", EmptyLine]
   emitExterns
-  tell [Empty]
+  tell [EmptyLine]
 
 emitExterns :: CMonad ()
 emitExterns =
-  tell $ map Extern standardFunctionsNames
+  tell $ map Extern $ "__new" : standardFunctionsNames
 
-funHeader :: String -> CMonad ()
-funHeader name =
+funHeader :: CMonad ()
+funHeader = do
+  name <- getName
   tell [
     Label name,
     Push "rbp",
     Mov "rbp" "rsp"]
 
-funFooter :: String -> CMonad ()
-funFooter name =
+funFooter :: CMonad ()
+funFooter = do
+  name <- getName
   tell [
     Label $ name ++ "$end",
     Pop "rbp",
-    Ret]
+    Custom "ret" []]
 
-funImpl :: String -> AsmStmts -> CMonad ()
-funImpl name body = do
-  funHeader name
-  tell body
-  funFooter name
+argRegisters :: [String]
+argRegisters = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]

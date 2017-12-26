@@ -19,7 +19,7 @@ char *readString() {
   char *result = (char *)malloc(MAX_LENGTH + 1);
   scanf("%s", result);
   const int length = strlen(result);
-  result = realloc(result, length + 1);
+  result = (char *)realloc(result, length + 1);
   return result;
 }
 
