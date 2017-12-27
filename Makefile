@@ -19,7 +19,7 @@ HPC_EXCLUDES=$(addprefix --exclude=,$(BNFC_MODULES))
 BNFC_SOURCES_FILES=$(addsuffix .hs,$(BNFC_MODULES))
 BNFC_SOURCES=$(addprefix $(BUILD)/,$(BNFC_SOURCES_FILES))
 
-.PHONY: all clean pack test testGood testBad
+.PHONY: all clean pack test testGood testBad travis
 
 all: $(BINARIES)
 
@@ -59,9 +59,16 @@ TestLatte: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \
 	$(GHC) $(GHCFLAGS) -w --make $@.hs -o ../$@
 
-Latte: $(BNFC_SOURCES) $(LINKED_SOURCES) lib/runtime.o
+Latte: .dependencies $(BNFC_SOURCES) $(LINKED_SOURCES) lib/runtime.o
 	cd $(BUILD) && \
 	$(GHC) $(GHCFLAGS) --make Main.hs -o ../$@
+
+.dependencies:
+	cabal update && \
+	cabal install mtl==2.2.1 extra==1.5 Unique==0.4.7.1 && \
+	touch .dependencies
+
+travis: shellcheck test
 
 $(LINKED_SOURCES): $(BUILD)/%: src/%
 	ln -srf $^ -t $(BUILD)

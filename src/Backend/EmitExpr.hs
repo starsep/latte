@@ -128,8 +128,8 @@ emitExpr q = case q of
       Label afterOrLabel]
     return Bool
   ERel e1 op e2 -> do
-    _ <- emitExpr e1
     _ <- emitExpr e2
+    _ <- emitExpr e1
     tell [
       Pop "rax",
       Pop "rdi",

@@ -27,8 +27,6 @@ before_install:
  - wget $BNFCURL -O bnfc.deb
 
 install:
- - cabal update
- - cabal install mtl==2.2.1 extra==1.5 Unique==0.4.7.1
  - sudo dpkg -i bnfc.deb
 
 after_install:
@@ -39,5 +37,4 @@ after_install:
  - alex --version
 
 script:
- - make shellcheck
- - make clean test
+ - make travis
