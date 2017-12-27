@@ -1,18 +1,19 @@
 module Compiler (compiler) where
 
 import AbsLatte
+import Asm
+import AsmFun
 import AsmStmt
-import AsmStandard
 import CompilerState
 import Control.Monad
-import Control.Monad.RWS (runRWS)
+import Control.Monad.RWS (runRWS, tell)
 import EmitStmt
 import Optimize
 
 compiler :: Bool -> String -> Program -> String
 compiler optimizeOn basename prog =
   let initEnv = ()
-      initState = ("", 0)
+      initState = ("", 0, [])
       (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
   printAsm output'
@@ -25,6 +26,10 @@ compile prog = do
 emitProgram :: Program -> CMonad ()
 emitProgram (Program topdefs) = do
   forM_ topdefs emitTopDef
+  literals <- getStrings
+  unless (null literals) $ do
+    tell [SectionData]
+    emitStringLiterals (reverse literals) 0
 
 emitTopDef :: TopDef -> CMonad ()
 emitTopDef (FnDef _ (Ident name) args block) = do
@@ -34,3 +39,10 @@ emitTopDef (FnDef _ (Ident name) args block) = do
   funFooter
 
 emitTopDef _ = return ()
+
+emitStringLiterals :: [String] -> Int -> CMonad ()
+emitStringLiterals [] _ = return ()
+emitStringLiterals (s:rest) i = do
+  let label = stringLiteralFromId i
+  tell [DataDecl label DataByte s]
+  emitStringLiterals rest (i+1)

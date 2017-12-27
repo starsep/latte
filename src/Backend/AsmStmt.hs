@@ -39,7 +39,6 @@ data AsmStmt
 indent :: AsmStmt -> Bool
 indent stmt = case stmt of
   CustomString{} -> False
-  DataDecl{} -> False
   EmptyLine -> False
   Extern{} -> False
   Global{} -> False

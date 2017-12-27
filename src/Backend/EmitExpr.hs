@@ -1,7 +1,7 @@
 module EmitExpr where
 
 import AbsLatte
-import AsmStandard
+import Asm
 import AsmStmt
 import CompilerState
 import Control.Monad
@@ -53,7 +53,13 @@ emitExpr q = case q of
   ELitInt number -> tell [Push $ show number]
   ELitTrue -> tell [Push "1"]
   ELitFalse -> tell [Push "0"]
-  EArray _ num -> emitEApp (Ident "__new") [num]
+  EArray _ num -> emitEApp (Ident "_new") [num]
+  EString s -> do
+    label <- stringLiteralLabel s
+    tell [
+      Mov "rdi" label,
+      Call "_copyStr",
+      Push "rax"]
   Neg expr -> do
     emitExpr expr
     tell [Pop "rax", Custom "neg" ["rax"], Push "rax"]

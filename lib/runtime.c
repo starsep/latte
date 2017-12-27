@@ -24,4 +24,11 @@ char *readString() {
   return result;
 }
 
-void *__new(long long size) { return calloc(8, size); }
+void *_new(long long size) { return calloc(8, size); }
+
+char *_copyStr(const char *s) {
+  int len = strlen(s) + 1;
+  char *res = (char *)malloc(len);
+  strcpy(res, s);
+  return res;
+}

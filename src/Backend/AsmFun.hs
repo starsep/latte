@@ -1,4 +1,4 @@
-module AsmStandard where
+module AsmFun where
 
 import AsmStmt
 import CompilerState
@@ -9,11 +9,14 @@ emitHeader :: CMonad ()
 emitHeader = do
   tell [Global "main", EmptyLine]
   emitExterns
-  tell [EmptyLine]
+  tell [SectionText]
+
+internalFunctions :: [String]
+internalFunctions = ["_new", "_copyStr"]
 
 emitExterns :: CMonad ()
 emitExterns =
-  tell $ map Extern $ "__new" : standardFunctionsNames
+  tell $ map Extern $ internalFunctions ++ standardFunctionsNames
 
 funHeader :: CMonad ()
 funHeader = do
@@ -30,17 +33,3 @@ funFooter = do
     Label $ name ++ "$end",
     Pop "rbp",
     Custom "ret" []]
-
-argRegisters :: [String]
-argRegisters = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
-
-preserveRegisters :: [String]
-preserveRegisters =
-  ["rbx", "rsp", "rbp", "r12", "r13", "r14", "r15"]
-
-scratchRegisters :: [String]
-scratchRegisters =
-  ["rax", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"]
-
-registers :: [String]
-registers = preserveRegisters ++ scratchRegisters
