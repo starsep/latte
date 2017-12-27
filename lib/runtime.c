@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-void error() { exit(1); }
+void error() {
+  puts("runtime error");
+  exit(1);
+}
 
 void printInt(long long x) { printf("%lld\n", x); }
 

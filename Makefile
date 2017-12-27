@@ -10,7 +10,7 @@ PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
 FRONTEND_SOURCES=Context Errors Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
-BACKEND_SOURCES=Compiler AsmStandard AsmStmt CExpression CompilerState CStatement Optimize
+BACKEND_SOURCES=Compiler AsmStandard AsmStmt EmitExpr EmitStmt CompilerState Optimize Label
 SOURCES=Latte $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
 			   $(BUILD)/Frontend/Typechecker.hs-boot $(BUILD)/Frontend/Print.hs-boot

@@ -4,14 +4,16 @@ import AbsLatte
 import AsmStmt
 import AsmStandard
 import CompilerState
-import CStatement
 import Control.Monad
-import Control.Monad.RWS (runRWS, tell)
+import Control.Monad.RWS (runRWS)
+import EmitStmt
 import Optimize
 
 compiler :: Bool -> String -> Program -> String
 compiler optimizeOn basename prog =
-  let (_, _, output) = runRWS (compile prog) () ""
+  let initEnv = ()
+      initState = ("", 0)
+      (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
   printAsm output'
 

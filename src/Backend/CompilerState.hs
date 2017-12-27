@@ -4,13 +4,21 @@ import AsmStmt
 import Control.Monad.RWS (RWS, put, get)
 
 type CEnv = ()
-type CState = String
+type CState = (String, Int)
 type CMonad = RWS CEnv AsmStmts CState
 
 putName :: String -> CMonad ()
-putName = put
+putName name = do
+  (_, labelId) <- get
+  put (name, labelId)
 
 getName :: CMonad String
 getName = do
-  name <- get
+  (name, _) <- get
   return name
+
+nextLabelId :: CMonad Int
+nextLabelId = do
+  (name, res) <- get
+  put (name, res + 1)
+  return res 

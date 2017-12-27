@@ -1,0 +1,9 @@
+boolean x() {
+  error();
+  return false;
+}
+
+int main() {
+  true || x();
+  return 0;
+}

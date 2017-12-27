@@ -2,7 +2,7 @@ module Typechecker (typecheck, typeOf) where
 
 import AbsLatte
 import Control.Monad
-import Control.Monad.RWS (get, lift, put, runRWST)
+import Control.Monad.RWS (get, put, runRWST)
 import qualified Data.Map as Map
 import Data.Map ((!))
 import Data.Maybe
@@ -304,7 +304,7 @@ typecheckClass name props scope = do
       duplicate = firstNotUnique propNames
   when (isJust duplicate) $
     Errors.multipleProps (fromJust duplicate) context
-  forM_ props (typecheckProp context) 
+  forM_ props (typecheckProp context)
 
 typecheckFun :: (Type, Ident, [Arg], Block) -> TopDefScope -> IO ()
 typecheckFun (outType, i, args, body) (typed, classDefs, inhTree) = do
