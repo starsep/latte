@@ -2,11 +2,13 @@ module CompilerState where
 
 import Asm
 import AsmStmt
-import Control.Monad.RWS (RWS, put, get)
+import Control.Monad.RWS (RWS, ask, put, get)
 import Data.List
 import Data.Maybe
+import Typechecker (TypecheckerOutput)
+import TypecheckerState (TypedFnDefs)
 
-type CEnv = ()
+type CEnv = TypecheckerOutput
 type CState = (String, Int, [String])
 type CMonad = RWS CEnv AsmStmts CState
 
@@ -28,14 +30,18 @@ nextLabelId = do
 
 stringLiteralLabel :: String -> CMonad String
 stringLiteralLabel s = do
-  let s' = parseStringLiteral s
   (name, labelId, strings) <- get
   let len = length strings
-      index = fromMaybe len $ elemIndex s' strings
-  put (name, labelId, if len == index then s' : strings else strings)
+      index = case elemIndex s strings of
+        Just x -> len - x - 1
+        Nothing -> len
+  put (name, labelId, if index == len then s : strings else strings)
   return $ stringLiteralFromId index
 
 getStrings :: CMonad [String]
 getStrings = do
   (_, _, strings) <- get
   return strings
+
+askTypedFns :: CMonad TypedFnDefs
+askTypedFns = ask

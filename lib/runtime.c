@@ -32,3 +32,12 @@ char *_copyStr(const char *s) {
   strcpy(res, s);
   return res;
 }
+
+char *_concat(const char *s1, const char *s2) {
+  const int len1 = strlen(s1);
+  const int len = len1 + strlen(s2) + 1;
+  char *res = (char *)malloc(len);
+  strcpy(res, s1);
+  strcpy(res + len1, s2);
+  return res;
+}

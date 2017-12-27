@@ -8,15 +8,8 @@ import TypecheckerPure (standardFunctionsNames)
 emitHeader :: CMonad ()
 emitHeader = do
   tell [Global "main", EmptyLine]
-  emitExterns
+  tell $ map Extern standardFunctionsNames
   tell [SectionText]
-
-internalFunctions :: [String]
-internalFunctions = ["_new", "_copyStr"]
-
-emitExterns :: CMonad ()
-emitExterns =
-  tell $ map Extern $ internalFunctions ++ standardFunctionsNames
 
 funHeader :: CMonad ()
 funHeader = do

@@ -1,4 +1,4 @@
-module Typechecker (typecheck, typeOf) where
+module Typechecker (typecheck, typeOf, TypecheckerOutput()) where
 
 import AbsLatte
 import Control.Monad
@@ -13,6 +13,8 @@ import Context
 import TypecheckerAssert
 import TypecheckerPure
 import TypecheckerState
+
+type TypecheckerOutput = TypedFnDefs
 
 typeOf :: Expr -> TCMonad Type
 typeOf q =
@@ -340,9 +342,10 @@ addClassDef (classDefs, inhTree) (ClassDefE ident extends props) =
   addClassDef (classDefs, (ident, extends) : inhTree) (ClassDef ident props)
 addClassDef acc _ = return acc
 
-typecheck :: Program -> IO ()
+typecheck :: Program -> IO TypecheckerOutput
 typecheck (Program topDefs) = do
   typedFns <- foldM addTypedFnDef standardFunctions topDefs
   (classDefs, inhTree) <- foldM addClassDef (Map.empty, []) topDefs
   assertCorrectMain typedFns
   forM_ topDefs (`typecheckTopDef` (typedFns, classDefs, inhTree))
+  return typedFns

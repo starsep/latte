@@ -82,7 +82,11 @@ standardFunctions =
     (Ident "printString", Fun Void [Str]),
     (Ident "error", Fun Void []),
     (Ident "readInt", Fun Int []),
-    (Ident "readString", Fun Str [])
+    (Ident "readString", Fun Str []),
+    -- INTERNAL FUNCTIONS:
+    (Ident "_new", Fun Str []),
+    (Ident "_copyStr", Fun Str [Str]),
+    (Ident "_concat", Fun Str [Str, Str])
   ]
 
 standardFunctionsNames :: [String]

@@ -9,10 +9,11 @@ import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
 import EmitStmt
 import Optimize
+import Typechecker (TypecheckerOutput)
 
-compiler :: Bool -> String -> Program -> String
-compiler optimizeOn basename prog =
-  let initEnv = ()
+compiler :: Bool -> String -> Program -> TypecheckerOutput -> String
+compiler optimizeOn basename prog tOut =
+  let initEnv = tOut
       initState = ("", 0, [])
       (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
@@ -44,5 +45,5 @@ emitStringLiterals :: [String] -> Int -> CMonad ()
 emitStringLiterals [] _ = return ()
 emitStringLiterals (s:rest) i = do
   let label = stringLiteralFromId i
-  tell [DataDecl label DataByte s]
+  tell [DataDecl label DataByte $ parseStringLiteral s]
   emitStringLiterals rest (i+1)

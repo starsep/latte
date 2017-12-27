@@ -48,6 +48,6 @@ main = do
         Bad msg -> do
           parsing msg $ Context [CParLex]
           return $ Program []
-    typecheck program
+    types <- typecheck program
     hPutStrLn stderr "OK"
-    putStrLn $ compiler optimizeOn basename program
+    putStrLn $ compiler optimizeOn basename program types
