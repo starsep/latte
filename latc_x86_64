@@ -22,7 +22,7 @@ set -- "${POSITIONAL[@]}"
 
 SOURCE="$1"
 OUTPUT=${SOURCE%.lat}
-ASSEMBLY="$OUTPUT".asm
+ASSEMBLY="$OUTPUT".s
 TMP="build/tmp.o"
 
 ./Latte "$SOURCE" "${FLAGS[@]}" > "$ASSEMBLY"

@@ -22,4 +22,5 @@ testing
 *.tix
 a.out
 *.asm
+*.s
 .dependencies
