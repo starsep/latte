@@ -18,11 +18,9 @@ long long readInt() {
 }
 
 char *readString() {
-  const static int MAX_LENGTH = 1024;
-  char *result = (char *)malloc(MAX_LENGTH + 1);
-  scanf("%s", result);
-  const int length = strlen(result);
-  result = (char *)realloc(result, length + 1);
+  char *result = NULL;
+  size_t n = 0;
+  getline(&result, &n, stdin);
   return result;
 }
 
