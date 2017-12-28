@@ -6,6 +6,8 @@ import qualified Data.Set as Set
 import Data.Set (Set)
 import qualified Data.Map as Map
 import Data.Map (Map, (!))
+import Data.Maybe
+import Text.Read
 
 optimizeStmt :: AsmStmts -> AsmStmts
 optimizeStmt (Sub _ "0" : rest) = optimizeStmt rest
@@ -13,6 +15,18 @@ optimizeStmt (Add _ "0" : rest) = optimizeStmt rest
 optimizeStmt (Cmp r "0" : rest) =
   Test r r : optimizeStmt rest
 optimizeStmt (Mov r "0" : rest) = Xor r r : optimizeStmt rest
+optimizeStmt (Add r1 x : Add r2 y : rest) =
+  optimizeAdd (r1, x, r2, y) 1 1 ++ optimizeStmt rest
+optimizeStmt (Sub r1 x : Add r2 y : rest) =
+  optimizeAdd (r1, x, r2, y) (-1) 1 ++ optimizeStmt rest
+optimizeStmt (Add r1 x : Sub r2 y : rest) =
+  optimizeAdd (r1, x, r2, y) 1 (-1) ++ optimizeStmt rest
+optimizeStmt (Sub r1 x : Sub r2 y : rest) =
+  optimizeAdd (r1, x, r2, y) (-1) (-1) ++ optimizeStmt rest
+optimizeStmt (Push p : Add stackPointer x : rest) =
+  let v = read x :: Int
+      x' = show $ v - 8 in
+  Add stackPointer x' : optimizeStmt rest
 optimizeStmt (Jmp x : Label y : rest)
   | x == y = Label y : optimizeStmt rest
   | otherwise = Jmp x : Label y : optimizeStmt rest
@@ -21,6 +35,23 @@ optimizeStmt (Push x : Pop y : rest)
   | otherwise = Mov y x : optimizeStmt rest
 optimizeStmt (h:t) = h : optimizeStmt t
 optimizeStmt [] = []
+
+signToAdd :: Int -> (String -> String -> AsmStmt)
+signToAdd x = if x > 0 then Add else Sub
+
+optimizeAdd :: (String, String, String, String) ->
+  Int -> Int -> AsmStmts
+optimizeAdd (r1, x, r2, y) s1 s2 =
+  let x' = readMaybe x :: Maybe Int
+      y' = readMaybe y :: Maybe Int in
+  if r1 /= r2 || isNothing x' || isNothing y' then
+    [signToAdd s1 r1 x, signToAdd s2 r2 y]
+  else (
+    let xv = s1 * fromJust x'
+        yv = s2 * fromJust y'
+        value = xv + yv in
+    [signToAdd value r1 $ show value]
+  )
 
 optimizeOnce :: AsmStmts -> AsmStmts
 optimizeOnce prog =
