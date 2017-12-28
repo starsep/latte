@@ -13,24 +13,25 @@ binaryOp :: Expr -> Expr ->
 binaryOp e1 e2 op = do
   _ <- emitExpr e1
   _ <- emitExpr e2
-  tell [
-    Pop "rdi",
-    Pop "rax",
-    op "rax" "rdi",
-    Push "rax"]
+  localReserve 2 $ \[r1, r2] ->
+    tell [
+      Pop r2,
+      Pop r1,
+      op r1 r2,
+      Push r1]
 
 emitMulOp :: Expr -> Expr -> MulOp -> CMonad Type
 emitMulOp e1 e2 mulOp = do
   _ <- emitExpr e1
   _ <- emitExpr e2
-  let asmOp = if mulOp == Times then Mul else Divide
-      result = if mulOp == Mod then "rdx" else "rax"
-  tell [
-    Pop "rcx",
-    Pop "rax",
-    Cqo,
-    asmOp "rcx",
-    Push result]
+  localReserveReg mulOpArg $
+    localReserve 1 $ \[r] ->
+      tell [
+        Pop r,
+        Pop mulOpArg,
+        Cqo,
+        mulOpStmt mulOp r,
+        Push $ mulOpResult mulOp]
   return Int
 
 emitAddOp :: Expr -> Expr -> AddOp -> CMonad Type
@@ -76,28 +77,32 @@ emitExpr q = case q of
     return t
   EString s -> do
     label <- stringLiteralLabel s
-    tell [
-      Mov "rdi" label,
-      Call "_copyStr",
-      Push "rax"]
+    localReserveReg resultReg $
+      tell [
+        Mov (head argRegisters) label,
+        Call "_copyStr",
+        Push resultReg]
     return Str
   Neg expr -> do
     _ <- emitExpr expr
-    tell [Pop "rax", Negate "rax", Push "rax"]
+    localReserve 1 $ \[r] ->
+      tell [Pop r, Negate r, Push r]
     return Int
   Not expr -> do
     _ <- emitExpr expr
-    tell [Pop "rax", Xor "rax" "1", Push "rax"]
+    localReserve 1 $ \[r] ->
+      tell [Pop r, Xor r "1", Push r]
     return Bool
   EMul e1 mulOp e2 -> emitMulOp e1 e2 mulOp
   EAdd e1 addOp e2 -> emitAddOp e1 e2 addOp
   EAnd e1 e2 -> do
     _ <- emitExpr e1
     (push0Label, afterAndLabel) <- andLabels
-    tell [
-      Pop "rax",
-      Cmp "rax" "0",
-      Je push0Label]
+    localReserve 1 $ \[r] ->
+      tell [
+        Pop r,
+        Cmp r "0",
+        Je push0Label]
     _ <- emitExpr e2
     tell [
       Jmp afterAndLabel,
@@ -108,10 +113,11 @@ emitExpr q = case q of
   EOr e1 e2 -> do
     _ <- emitExpr e1
     (push1Label, afterOrLabel) <- orLabels
-    tell [
-      Pop "rax",
-      Cmp "rax" "0",
-      Jne push1Label]
+    localReserve 1 $ \[r] ->
+      tell [
+        Pop r,
+        Cmp r "0",
+        Jne push1Label]
     _ <- emitExpr e2
     tell [
       Jmp afterOrLabel,
@@ -122,13 +128,16 @@ emitExpr q = case q of
   ERel e1 op e2 -> do
     _ <- emitExpr e2
     _ <- emitExpr e1
-    tell [
-      Pop "rax",
-      Pop "rdi",
-      Cmp "rax" "rdi",
-      Set op "al",
-      Movzx "eax" "al",
-      Push "rax"]
+    localReserve 2 $ \[r1, r2] -> do
+      let r1_32 = to32bit r1
+          r1_8 = to8bit r1
+      tell [
+        Pop r1,
+        Pop r2,
+        Cmp r1 r2,
+        Set op r1_8,
+        Movzx r1_32 r1_8,
+        Push r1]
     return Bool
 
 emitEApp :: Ident -> [Expr] -> CMonad Type
@@ -138,14 +147,17 @@ emitEApp ident@(Ident name) args = do
   tell [Call name]
   let argsToPop = length args - 6
   when (argsToPop > 0) $
-    tell [Add "rsp" $ show $ argsToPop * 8]
-  tell [Push "rax"]
+    tell [Add stackPointer $ show $ argsToPop * 8]
   typed <- askTypedFns
-  return $ typed ! ident
+  let t = typed ! ident
+  unless (t == Void) $
+    localReserveReg resultReg $
+      tell [Push resultReg]
+  return t
 
 moveArgsToRegisters :: Int -> Int -> CMonad ()
 moveArgsToRegisters i n
   | i == n = return ()
   | otherwise = do
-    tell [Pop $ ["rdi", "rsi", "rdx", "rcx", "r8", "r9"] !! i]
+    tell [Pop $ argRegisters !! i]
     moveArgsToRegisters (i + 1) n

@@ -15,7 +15,7 @@ compiler :: Bool -> String -> Program -> TypecheckerOutput -> String
 compiler optimizeOn basename prog tOut =
   let locals = localsProg prog
       initEnv = (tOut, locals)
-      initState = ("", 0, [])
+      initState = ("", 0, [], [])
       (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
   printAsm output'
@@ -61,9 +61,9 @@ funHeader = do
   locSize <- localsSize
   tell [
     Label name,
-    Push "rbp",
-    Mov "rbp" "rsp",
-    Sub "rsp" locSize]
+    Push basePointer,
+    Mov basePointer stackPointer,
+    Sub stackPointer locSize]
 
 funFooter :: CMonad ()
 funFooter = do
@@ -71,6 +71,6 @@ funFooter = do
   locSize <- localsSize
   tell [
     Label $ name ++ "$end",
-    Add "rsp" locSize,
-    Pop "rbp",
+    Add stackPointer locSize,
+    Pop basePointer,
     Return]

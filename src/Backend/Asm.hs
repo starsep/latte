@@ -4,6 +4,8 @@ import AbsLatte
 import Data.List
 
 type AsmStmts = [AsmStmt]
+type Register = String
+type Registers = [Register]
 
 printAsm :: AsmStmts -> String
 printAsm = foldl (\acc x ->
@@ -108,16 +110,45 @@ data DataSize
 instance Show DataSize where
   show DataByte = "db"
 
-preserveRegisters :: [String]
+preserveRegisters :: Registers
 preserveRegisters =
   ["rbx", "rsp", "rbp", "r12", "r13", "r14", "r15"]
 
-scratchRegisters :: [String]
+scratchRegisters :: Registers
 scratchRegisters =
   ["rax", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"]
 
-registers :: [String]
+registers :: Registers
 registers = preserveRegisters ++ scratchRegisters
+
+argRegisters :: Registers
+argRegisters = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+
+scratch32Registers :: Registers
+scratch32Registers =
+  ["eax", "edi", "esi", "edx", "ecx", "r8d", "r9d", "r10d", "r11d"]
+
+scratch16Registers :: Registers
+scratch16Registers =
+  ["ax", "di", "si", "dx", "cx", "r8w", "r9w", "r10w", "r11w"]
+
+scratch8Registers :: Registers
+scratch8Registers =
+  ["al", "dil", "sil", "dl", "cl", "r8b", "r9b", "r10b", "r11b"]
+
+convertRegister :: Registers -> Register -> Register
+convertRegister to reg =
+  let (Just index) = elemIndex reg scratchRegisters in
+  to !! index
+
+to32bit :: Register -> Register
+to32bit = convertRegister scratch32Registers
+
+to16bit :: Register -> Register
+to16bit = convertRegister scratch16Registers
+
+to8bit :: Register -> Register
+to8bit = convertRegister scratch8Registers
 
 stringLiteralFromId :: Int -> String
 stringLiteralFromId num = "_stringLiteral" ++ show num
@@ -127,3 +158,25 @@ parseStringLiteral s =
   let parsedString = show s
       content = init (tail parsedString) in
   "`" ++ content ++ "\\0`"
+
+mulOpArg :: Register
+mulOpArg = "rax"
+
+mulOpResult :: MulOp -> Register
+mulOpResult Times = "rax"
+mulOpResult Div = "rax"
+mulOpResult Mod = "rdx"
+
+mulOpStmt :: MulOp -> (String -> AsmStmt)
+mulOpStmt Times = Mul
+mulOpStmt Div = Divide
+mulOpStmt Mod = Divide
+
+resultReg :: Register
+resultReg = "rax"
+
+basePointer :: Register
+basePointer = "rbp"
+
+stackPointer :: Register
+stackPointer = "rsp"

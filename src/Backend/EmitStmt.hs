@@ -15,30 +15,33 @@ emitStmt q = case q of
   Decl _ items -> forM_ items emitDecl
   Ass lvalue expr -> do
     _ <- emitExpr expr
-    tell [Pop "rax"] -- TODO: save to lvalue
+    localReserve 1 $ \[r] ->
+      tell [Pop r] -- TODO: save to lvalue
   Incr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Plus (ELitInt 1))
   Decr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Minus (ELitInt 1))
   Ret expr -> do
     _ <- emitExpr expr
-    tell [Pop "rax"]
+    tell [Pop resultReg]
     jumpEndLabel
   VRet -> jumpEndLabel
   Cond expr stmt -> do
     _ <- emitExpr expr
     afterLabel <- ifLabel
-    tell [
-      Pop "rax",
-      Cmp "rax" "0",
-      Je afterLabel]
+    localReserve 1 $ \[r] ->
+      tell [
+        Pop r,
+        Cmp r "0",
+        Je afterLabel]
     emitStmt stmt
     tell [Label afterLabel]
   CondElse expr stmt stmt' -> do
     _ <- emitExpr expr
     (elseLabel, afterLabel) <- ifElseLabels
-    tell [
-      Pop "rax",
-      Cmp "rax" "0",
-      Je elseLabel]
+    localReserve 1 $ \[r] ->
+      tell [
+        Pop r,
+        Cmp r "0",
+        Je elseLabel]
     emitStmt stmt
     tell [
       Jmp afterLabel,
@@ -49,10 +52,11 @@ emitStmt q = case q of
     (beginLabel, afterLabel) <- whileLabels
     tell [Label beginLabel]
     _ <- emitExpr expr
-    tell [
-      Pop "rax",
-      Cmp "rax" "0",
-      Je afterLabel]
+    localReserve 1 $ \[r] ->
+      tell [
+        Pop r,
+        Cmp r "0",
+        Je afterLabel]
     emitStmt stmt
     tell [
       Jmp beginLabel,
@@ -61,7 +65,7 @@ emitStmt q = case q of
   SExp expr -> do
     t <- emitExpr expr
     unless (t == Void) $
-      tell [Pop "rax"]
+      tell [Add stackPointer "8"]
 
 emitBlock :: Block -> CMonad ()
 emitBlock (Block stmts) = forM_ stmts emitStmt
