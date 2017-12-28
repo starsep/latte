@@ -6,13 +6,15 @@ import CompilerState
 import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
 import EmitStmt
+import Locals
 import Optimize
 import Typechecker (TypecheckerOutput)
 import TypecheckerPure (standardFunctionsNames)
 
 compiler :: Bool -> String -> Program -> TypecheckerOutput -> String
 compiler optimizeOn basename prog tOut =
-  let initEnv = tOut
+  let locals = localsProg prog
+      initEnv = (tOut, locals)
       initState = ("", 0, [])
       (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
@@ -56,15 +58,19 @@ emitHeader = do
 funHeader :: CMonad ()
 funHeader = do
   name <- getName
+  locSize <- localsSize
   tell [
     Label name,
     Push "rbp",
-    Mov "rbp" "rsp"]
+    Mov "rbp" "rsp",
+    Sub "rsp" locSize]
 
 funFooter :: CMonad ()
 funFooter = do
   name <- getName
+  locSize <- localsSize
   tell [
     Label $ name ++ "$end",
+    Add "rsp" locSize,
     Pop "rbp",
-    Custom "ret" []]
+    Return]

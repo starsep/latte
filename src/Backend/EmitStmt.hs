@@ -29,7 +29,7 @@ emitStmt q = case q of
     tell [
       Pop "rax",
       Cmp "rax" "0",
-      Custom "je" [afterLabel]]
+      Je afterLabel]
     emitStmt stmt
     tell [Label afterLabel]
   CondElse expr stmt stmt' -> do
@@ -38,7 +38,7 @@ emitStmt q = case q of
     tell [
       Pop "rax",
       Cmp "rax" "0",
-      Custom "je" [elseLabel]]
+      Je elseLabel]
     emitStmt stmt
     tell [
       Jmp afterLabel,
@@ -52,7 +52,7 @@ emitStmt q = case q of
     tell [
       Pop "rax",
       Cmp "rax" "0",
-      Custom "je" [afterLabel]]
+      Je afterLabel]
     emitStmt stmt
     tell [
       Jmp beginLabel,

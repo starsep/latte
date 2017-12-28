@@ -4,10 +4,12 @@ import Asm
 import Control.Monad
 import Control.Monad.RWS (RWS, ask, put, get, tell, listen, pass)
 import Data.List
+import Data.Map ((!))
+import Locals
 import Typechecker (TypecheckerOutput)
 import TypecheckerState (TypedFnDefs)
 
-type CEnv = TypecheckerOutput
+type CEnv = (TypecheckerOutput, Locals)
 type CState = (String, Int, [String])
 type CMonad = RWS CEnv AsmStmts CState
 
@@ -43,7 +45,20 @@ getStrings = do
   return strings
 
 askTypedFns :: CMonad TypedFnDefs
-askTypedFns = ask
+askTypedFns = do
+  (typed, _) <- ask
+  return typed
+
+askLocals :: CMonad Locals
+askLocals = do
+  (_, locals) <- ask
+  return locals
+
+localsSize :: CMonad String
+localsSize = do
+  name <- getName
+  locals <- askLocals
+  return $ show $ 8 * locals ! name
 
 localRWS :: CMonad a -> CMonad a
 localRWS action = do

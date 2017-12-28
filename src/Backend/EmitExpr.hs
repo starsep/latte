@@ -19,15 +19,6 @@ binaryOp e1 e2 op = do
     op "rax" "rdi",
     Push "rax"]
 
-relOpToAsm :: RelOp -> String
-relOpToAsm op = case op of
-  LTH -> "setl"
-  LE -> "setle"
-  GTH -> "setg"
-  GE -> "setge"
-  EQU -> "sete"
-  NE -> "setne"
-
 emitMulOp :: Expr -> Expr -> MulOp -> CMonad Type
 emitMulOp e1 e2 mulOp = do
   _ <- emitExpr e1
@@ -37,7 +28,7 @@ emitMulOp e1 e2 mulOp = do
   tell [
     Pop "rcx",
     Pop "rax",
-    Custom "cqo" [],
+    Cqo,
     asmOp "rcx",
     Push result]
   return Int
@@ -92,7 +83,7 @@ emitExpr q = case q of
     return Str
   Neg expr -> do
     _ <- emitExpr expr
-    tell [Pop "rax", Custom "neg" ["rax"], Push "rax"]
+    tell [Pop "rax", Negate "rax", Push "rax"]
     return Int
   Not expr -> do
     _ <- emitExpr expr
@@ -106,7 +97,7 @@ emitExpr q = case q of
     tell [
       Pop "rax",
       Cmp "rax" "0",
-      Custom "je" [push0Label]]
+      Je push0Label]
     _ <- emitExpr e2
     tell [
       Jmp afterAndLabel,
@@ -120,7 +111,7 @@ emitExpr q = case q of
     tell [
       Pop "rax",
       Cmp "rax" "0",
-      Custom "jne" [push1Label]]
+      Jne push1Label]
     _ <- emitExpr e2
     tell [
       Jmp afterOrLabel,
@@ -135,8 +126,8 @@ emitExpr q = case q of
       Pop "rax",
       Pop "rdi",
       Cmp "rax" "rdi",
-      Custom (relOpToAsm op) ["al"],
-      Custom "movzx" ["eax", "al"],
+      Set op "al",
+      Movzx "eax" "al",
       Push "rax"]
     return Bool
 
