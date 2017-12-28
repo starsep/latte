@@ -2,14 +2,13 @@ module Compiler (compiler) where
 
 import AbsLatte
 import Asm
-import AsmFun
-import AsmStmt
 import CompilerState
 import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
 import EmitStmt
 import Optimize
 import Typechecker (TypecheckerOutput)
+import TypecheckerPure (standardFunctionsNames)
 
 compiler :: Bool -> String -> Program -> TypecheckerOutput -> String
 compiler optimizeOn basename prog tOut =
@@ -47,3 +46,25 @@ emitStringLiterals (s:rest) i = do
   let label = stringLiteralFromId i
   tell [DataDecl label DataByte $ parseStringLiteral s]
   emitStringLiterals rest (i+1)
+
+emitHeader :: CMonad ()
+emitHeader = do
+  tell [Global "main", EmptyLine]
+  tell $ map Extern standardFunctionsNames
+  tell [SectionText]
+
+funHeader :: CMonad ()
+funHeader = do
+  name <- getName
+  tell [
+    Label name,
+    Push "rbp",
+    Mov "rbp" "rsp"]
+
+funFooter :: CMonad ()
+funFooter = do
+  name <- getName
+  tell [
+    Label $ name ++ "$end",
+    Pop "rbp",
+    Custom "ret" []]

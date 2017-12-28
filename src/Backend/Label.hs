@@ -1,6 +1,6 @@
 module Label where
 
-import AsmStmt
+import Asm
 import CompilerState
 import Control.Monad.RWS (tell)
 

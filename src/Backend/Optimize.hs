@@ -1,6 +1,6 @@
 module Optimize where
 
-import AsmStmt
+import Asm
 import Data.List.Unique
 
 optimizeOnce :: AsmStmts -> AsmStmts

@@ -2,7 +2,6 @@ module EmitExpr where
 
 import AbsLatte
 import Asm
-import AsmStmt
 import CompilerState
 import Control.Monad
 import Control.Monad.RWS (tell)
@@ -157,5 +156,5 @@ moveArgsToRegisters :: Int -> Int -> CMonad ()
 moveArgsToRegisters i n
   | i == n = return ()
   | otherwise = do
-    tell [Pop $ argRegisters !! i]
+    tell [Pop $ ["rdi", "rsi", "rdx", "rcx", "r8", "r9"] !! i]
     moveArgsToRegisters (i + 1) n
