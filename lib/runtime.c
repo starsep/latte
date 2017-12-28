@@ -33,6 +33,16 @@ void *_new(long long size) {
   return res;
 }
 
+long long _arrayLength(long long *array) {
+  return array[0];
+}
+
+void *_newArray(long long size) {
+  void *res = _new(size + 1);
+  ((long long *)res)[0] = size;
+  return res;
+}
+
 char *_copyStr(const char *s) {
   int len = strlen(s) + 1;
   char *res = (char *)malloc(len);

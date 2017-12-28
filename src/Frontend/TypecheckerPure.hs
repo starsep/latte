@@ -84,9 +84,11 @@ standardFunctions =
     (Ident "readInt", Fun Int []),
     (Ident "readString", Fun Str []),
     -- INTERNAL FUNCTIONS:
-    (Ident "_new", Fun Str []),
+    (Ident "_arrayLength", Fun Int [Str]),
     (Ident "_copyStr", Fun Str [Str]),
-    (Ident "_concat", Fun Str [Str, Str])
+    (Ident "_concat", Fun Str [Str, Str]),
+    (Ident "_new", Fun Str [Int]),
+    (Ident "_newArray", Fun Str [Int])
   ]
 
 standardFunctionsNames :: [String]

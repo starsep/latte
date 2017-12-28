@@ -45,12 +45,10 @@ emitMulOp e1 e2 mulOp = do
 
 emitAddOp :: Expr -> Expr -> AddOp -> CMonad Type
 emitAddOp e1 e2 Plus = do
-  t <- emitExpr e1
-  tell [Pop "rax"]
+  t <- localRWS $ emitExpr e1
   case t of
     Str -> void $ emitEApp (Ident "_concat") [e1, e2]
-    Int -> binaryOp e1 e2 Add
-    _ -> return () -- TODO: error
+    _ -> binaryOp e1 e2 Add
   return t
 emitAddOp e1 e2 Minus = do
   binaryOp e1 e2 Sub
@@ -64,7 +62,11 @@ emitExpr q = case q of
   EIndex index -> return Int -- TODO: implement
   EVar ident -> return Int -- TODO: implement
   EMethod lv ident args -> return Int -- TODO: implement
-  EField lv ident -> return Int -- TODO: implement
+  EField lv ident -> do
+    t <- localRWS $ emitExpr lv
+    case t of
+      Array _ -> emitEApp (Ident "_arrayLength") [lv]
+      _ -> return Int -- TODO
   ELitInt number -> do
     tell [Push $ show number]
     return Int
@@ -76,11 +78,11 @@ emitExpr q = case q of
     return Bool
   EApp ident args -> emitEApp ident args
   EArray t num -> do
-    emitEApp (Ident "_new") [num]
+    _ <- emitEApp (Ident "_newArray") [num]
     return $ Array t
   EClass t -> do
     let size = 8 -- TODO: correct size of class
-    emitEApp (Ident "_new") [ELitInt size]
+    _ <- emitEApp (Ident "_new") [ELitInt size]
     return t
   EString s -> do
     label <- stringLiteralLabel s

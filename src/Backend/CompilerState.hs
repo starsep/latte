@@ -2,9 +2,10 @@ module CompilerState where
 
 import Asm
 import AsmStmt
-import Control.Monad.RWS (RWS, ask, put, get)
+import Control.Monad
+import Control.Monad.RWS (RWS, ask, put, get, tell, listen, pass)
 import Data.List
-import Data.Maybe
+import Debug.Trace
 import Typechecker (TypecheckerOutput)
 import TypecheckerState (TypedFnDefs)
 
@@ -45,3 +46,12 @@ getStrings = do
 
 askTypedFns :: CMonad TypedFnDefs
 askTypedFns = ask
+
+localRWS :: Show a => CMonad a -> CMonad a
+localRWS action = do
+  state <- get
+  r <- pass $ do
+    (r, _) <- listen action
+    return (r, const [])
+  put state
+  return r
