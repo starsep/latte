@@ -3,9 +3,17 @@ module Asm where
 import AbsLatte
 import Data.List
 
+newtype Address = Address Int
 type AsmStmts = [AsmStmt]
 type Register = String
 type Registers = [Register]
+
+instance Show Address where
+  show (Address n) = "qword[" ++ basePointer ++ " - " ++ show n ++ "]"
+
+isAddress :: String -> Bool
+isAddress [] = False
+isAddress s = head s == head (show (Address 0))
 
 printAsm :: AsmStmts -> String
 printAsm = foldl (\acc x ->
@@ -102,6 +110,7 @@ instance Show AsmStmt where
   show (Sub dest src) = showBinOp "sub" dest src
   show (Test arg1 arg2) = showBinOp "test" arg1 arg2
   show (Xor dest src) = showBinOp "xor" dest src
+
 
 data DataSize
   = DataByte

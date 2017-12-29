@@ -42,5 +42,5 @@ localsStmt q = case q of
   Cond _ stmt -> localsStmt stmt
   CondElse _ stmt stmt' -> max (localsStmt stmt) (localsStmt stmt')
   While _ stmt -> localsStmt stmt
-  For _ _ _ stmt -> 1 + localsStmt stmt
+  For _ _ _ stmt -> 3 + localsStmt stmt
   SExp{} -> 0

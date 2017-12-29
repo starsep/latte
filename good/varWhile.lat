@@ -1,0 +1,8 @@
+int main() {
+  int x = 42;
+  while (x < 50) {
+    printInt(x);
+    x++;
+  }
+  return 0;
+}

@@ -1,10 +1,11 @@
 module CompilerState where
 
+import AbsLatte
 import Asm
 import Control.Monad
 import Control.Monad.RWS (RWS, ask, put, get, listen, pass)
 import Data.List
-import Data.Map ((!))
+import Data.Map ((!), Map)
 import Debug.Trace
 import Locals
 import Typechecker (TypecheckerOutput)
@@ -14,50 +15,62 @@ type CEnv = (TypecheckerOutput, Locals)
 type FName = String
 type LabelId = Int
 type StringLits = [String]
-type CState = (FName, LabelId, StringLits, Registers)
+type VarAddr = [Map String (Address, Type)]
+type VarState = (VarAddr, Address)
+type CState = (FName, LabelId, StringLits, Registers, VarState)
 type CMonad = RWS CEnv AsmStmts CState
 
 putName :: String -> CMonad ()
 putName name = do
-  (_, labelId, strings, regs) <- get
-  put (name, labelId, strings, regs)
+  (_, labelId, strings, regs, vars) <- get
+  put (name, labelId, strings, regs, vars)
 
 getName :: CMonad FName
 getName = do
-  (name, _, _, _) <- get
+  (name, _, _, _, _) <- get
   return name
 
 nextLabelId :: CMonad LabelId
 nextLabelId = do
-  (name, res, strings, regs) <- get
-  put (name, res + 1, strings, regs)
+  (name, res, strings, regs, vars) <- get
+  put (name, res + 1, strings, regs, vars)
   return res
 
 getReservedRegs :: CMonad Registers
 getReservedRegs = do
-  (_, _, _, regs) <- get
+  (_, _, _, regs, _) <- get
   return regs
 
 putReservedRegs :: Registers -> CMonad ()
 putReservedRegs regs = do
-  (name, res, strings, _) <- get
-  put (name, res, strings, regs)
+  (name, res, strings, _, vars) <- get
+  put (name, res, strings, regs, vars)
 
 stringLiteralLabel :: String -> CMonad String
 stringLiteralLabel s = do
-  (name, labelId, strings, regs) <- get
+  (name, labelId, strings, regs, vars) <- get
   let len = length strings
       index = case elemIndex s strings of
         Just x -> len - x - 1
         Nothing -> len
       strings' = if index == len then s : strings else strings
-  put (name, labelId, strings', regs)
+  put (name, labelId, strings', regs, vars)
   return $ stringLiteralFromId index
 
 getStrings :: CMonad StringLits
 getStrings = do
-  (_, _, strings, _) <- get
+  (_, _, strings, _, _) <- get
   return strings
+
+getVars :: CMonad VarState
+getVars = do
+  (_, _, _, _, vars) <- get
+  return vars
+
+putVars :: VarState -> CMonad ()
+putVars vars = do
+  (name, labelId, strings, regs, _) <- get
+  put (name, labelId, strings, regs, vars)
 
 askTypedFns :: CMonad TypedFnDefs
 askTypedFns = do

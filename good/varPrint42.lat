@@ -1,0 +1,9 @@
+int main() {
+  f();
+  return 0;
+}
+
+void f() {
+  int x = 42;
+  printInt(x);
+}

@@ -15,7 +15,7 @@ compiler :: Bool -> String -> Program -> TypecheckerOutput -> String
 compiler optimizeOn basename prog tOut =
   let locals = localsProg prog
       initEnv = (tOut, locals)
-      initState = ("", 0, [], [])
+      initState = ("", 0, [], [], ([], Address 8))
       (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
   printAsm output'
@@ -37,10 +37,15 @@ emitTopDef :: TopDef -> CMonad ()
 emitTopDef (FnDef _ (Ident name) args block) = do
   putName name
   funHeader
-  emitBlock block
+  let argsDecl = map argDecl args
+  -- TODO: assign args
+  emitBlock $ Block $ argsDecl ++ [BStmt block]
   funFooter
 
-emitTopDef _ = return ()
+emitTopDef _ = return () -- TODO
+
+argDecl :: Arg -> Stmt
+argDecl (Arg t ident) = Decl t [NoInit ident]
 
 emitStringLiterals :: [String] -> Int -> CMonad ()
 emitStringLiterals [] _ = return ()

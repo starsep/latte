@@ -6,6 +6,7 @@ import CompilerState
 import Control.Monad
 import Control.Monad.RWS (tell)
 import Data.Map ((!))
+import qualified Data.Map as Map
 import Label
 
 binaryOp :: Expr -> Expr ->
@@ -51,7 +52,7 @@ emitExpr q = case q of
     tell [Push "0"]
     return t
   EIndex index -> return Int -- TODO: implement
-  EVar ident -> return Int -- TODO: implement
+  EVar ident -> emitEVar ident
   EMethod lv ident args -> return Int -- TODO: implement
   EField lv ident -> do
     t <- localRWS $ emitExpr lv
@@ -154,6 +155,31 @@ emitEApp ident@(Ident name) args = do
     localReserveReg resultReg $
       tell [Push resultReg]
   return t
+
+emitEVarPtr :: Ident -> CMonad Type
+emitEVarPtr (Ident name) = do
+  (vars, _) <- getVars
+  let varsScope = head $ filter (Map.member name) vars
+      (Address addr, t) = varsScope ! name
+  localReserve 1 $ \[r] ->
+    tell [
+      Mov r basePointer,
+      Sub r $ show addr,
+      Push r]
+  return t
+
+emitEVar :: Ident -> CMonad Type
+emitEVar ident = do
+  t <- emitEVarPtr ident
+  localReserve 1 $ \[r] ->
+    tell [
+      Pop r,
+      Mov r $ "qword[" ++ r ++ "]",
+      Push r]
+  return t
+
+emitLValue :: Expr -> CMonad ()
+emitLValue (EVar ident) = void $ emitEVarPtr ident
 
 moveArgsToRegisters :: Int -> Int -> CMonad ()
 moveArgsToRegisters i n

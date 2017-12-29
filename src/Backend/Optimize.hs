@@ -14,7 +14,11 @@ optimizeStmt (Sub _ "0" : rest) = optimizeStmt rest
 optimizeStmt (Add _ "0" : rest) = optimizeStmt rest
 optimizeStmt (Cmp r "0" : rest) =
   Test r r : optimizeStmt rest
-optimizeStmt (Mov r "0" : rest) = Xor r r : optimizeStmt rest
+optimizeStmt (Mov r "0" : rest) =
+  if isAddress r then
+    Mov r "0" : optimizeStmt rest
+  else
+    Xor r r : optimizeStmt rest
 optimizeStmt (Add r1 x : Add r2 y : rest) =
   optimizeAdd (r1, x, r2, y) 1 1 ++ optimizeStmt rest
 optimizeStmt (Sub r1 x : Add r2 y : rest) =
@@ -23,10 +27,13 @@ optimizeStmt (Add r1 x : Sub r2 y : rest) =
   optimizeAdd (r1, x, r2, y) 1 (-1) ++ optimizeStmt rest
 optimizeStmt (Sub r1 x : Sub r2 y : rest) =
   optimizeAdd (r1, x, r2, y) (-1) (-1) ++ optimizeStmt rest
-optimizeStmt (Push p : Add stackPointer x : rest) =
-  let v = read x :: Int
-      x' = show $ v - 8 in
-  Add stackPointer x' : optimizeStmt rest
+optimizeStmt (Push p : Add r x : rest) =
+  if x /= stackPointer then
+    Push p : optimizeStmt (Add r x : rest)
+  else (
+    let v = read x :: Int
+        x' = show $ v - 8 in
+    Add stackPointer x' : optimizeStmt rest)
 optimizeStmt (Jmp x : Label y : rest)
   | x == y = Label y : optimizeStmt rest
   | otherwise = Jmp x : Label y : optimizeStmt rest

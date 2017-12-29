@@ -30,20 +30,19 @@ define test_examples
 		echo -e "\e[93m----------- TESTING\e[96m $$e \e[93m--------------\e[0m"; \
 		./latc "$$e" 2>&1 | tee build/output ; \
 		[ "x$$(head -n 1 build/output)" = "x$2" ] || exit 1;  \
+		if [ "xOK" = "x$2" ]; then \
+		  ./$${e%.lat}; \
+		fi; \
 	done
 endef
-
-# if [ "xOK" = "x$2" ]; then \
-#  ./$${e%.lat}; \
-# fi; \
 
 
 testGood: Latte
 	$(call test_examples,good,OK)
 	$(call test_examples,good/basic,OK)
-	$(call test_examples,good/arrays,OK)
-	$(call test_examples,good/struct,OK)
-	
+
+#$(call test_examples,good/arrays,OK)	
+#$(call test_examples,good/struct,OK)
 #$(call test_examples,good/objects1,OK)
 #$(call test_examples,good/objects2,OK)
 #$(call test_examples,good/virtual,OK)

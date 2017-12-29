@@ -5,6 +5,7 @@ import Asm
 import CompilerState
 import Control.Monad
 import Control.Monad.RWS (tell)
+import qualified Data.Map as Map
 import EmitExpr
 import Label
 
@@ -12,11 +13,8 @@ emitStmt :: Stmt -> CMonad ()
 emitStmt q = case q of
   Empty -> return ()
   BStmt block -> emitBlock block
-  Decl _ items -> forM_ items emitDecl
-  Ass lvalue expr -> do
-    _ <- emitExpr expr
-    localReserve 1 $ \[r] ->
-      tell [Pop r] -- TODO: save to lvalue
+  Decl t items -> forM_ items $ emitDecl t
+  Ass lv expr -> emitAss lv expr
   Incr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Plus (ELitInt 1))
   Decr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Minus (ELitInt 1))
   Ret expr -> do
@@ -61,17 +59,55 @@ emitStmt q = case q of
     tell [
       Jmp beginLabel,
       Label afterLabel]
-  For _ _ _ _ -> return () -- TODO: implement for
+  For t ident e s -> emitFor t ident e s
   SExp expr -> do
     t <- emitExpr expr
     unless (t == Void) $
       tell [Add stackPointer "8"]
 
 emitBlock :: Block -> CMonad ()
-emitBlock (Block stmts) = forM_ stmts emitStmt
+emitBlock (Block stmts) = do
+  (vars, nextVar) <- getVars
+  putVars (Map.empty : vars, nextVar)
+  forM_ stmts emitStmt
+  (vars', nextVar') <- getVars
+  putVars (tail vars', nextVar')
 
-emitDecl :: Item -> CMonad ()
-emitDecl (Init ident expr) = do
-  emitDecl $ NoInit ident
+emitFor :: Type -> Ident -> Expr -> Stmt -> CMonad ()
+emitFor t ident e stmt = do
+  let iIdent = Ident "_i"
+      aIdent = Ident "_a"
+      lenIdent = Ident "length"
+      iVar = EVar iIdent
+      aVar = EVar aIdent
+      index = EIndex $ Index aVar iVar
+  emitBlock $ Block [
+    Decl Int [Init iIdent (ELitInt 0)],
+    Decl (Array t) [Init aIdent e],
+    While (ERel iVar LTH (EField aVar lenIdent)) $ BStmt $
+      Block [
+        Decl t [Init ident index],
+        stmt
+      ]
+    ]
+
+emitDecl :: Type -> Item -> CMonad ()
+emitDecl t (Init ident expr) = do
+  emitDecl t $ NoInit ident
   emitStmt $ Ass (EVar ident) expr
-emitDecl (NoInit (Ident name)) = return () -- TODO
+emitDecl t (NoInit (Ident name)) = do
+  (scopeVars : vars, addr) <- getVars
+  let scopeVars' = Map.insert name (addr, t) scopeVars
+      (Address n) = addr
+  putVars (scopeVars': vars, Address $ n + 8)
+  tell [Mov (show addr) "0"]
+
+emitAss :: Expr -> Expr -> CMonad ()
+emitAss lv expr = do
+  _ <- emitExpr expr
+  emitLValue lv
+  localReserve 2 $ \[l, e] ->
+    tell [
+      Pop l,
+      Pop e,
+      Mov ("qword[" ++ l ++ "]") e]
