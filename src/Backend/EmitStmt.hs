@@ -80,13 +80,14 @@ emitFor t ident e stmt = do
       lenIdent = Ident "length"
       iVar = EVar iIdent
       aVar = EVar aIdent
-      index = EIndex $ Index aVar iVar
+      subs = ESubs $ Subs aVar iVar
   emitBlock $ Block [
     Decl Int [Init iIdent (ELitInt 0)],
     Decl (Array t) [Init aIdent e],
     While (ERel iVar LTH (EField aVar lenIdent)) $ BStmt $
       Block [
-        Decl t [Init ident index],
+        Decl t [Init ident subs],
+        Incr iIdent,
         stmt
       ]
     ]

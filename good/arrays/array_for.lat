@@ -1,0 +1,6 @@
+int main() {
+  for (int x : new int[4]) {
+    printInt(x);
+  }
+  return 0;
+}

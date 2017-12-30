@@ -28,10 +28,18 @@ test: testGood testBad
 define test_examples
 	@for e in $1/*.lat ; do \
 		echo -e "\e[93m----------- TESTING\e[96m $$e \e[93m--------------\e[0m"; \
-		./latc "$$e" 2>&1 | tee build/output ; \
-		[ "x$$(head -n 1 build/output)" = "x$2" ] || exit 1;  \
+		./latc "$$e" 2>&1 | tee "${BUILD}"/output ; \
+		[ "x$$(head -n 1 "${BUILD}"/output)" = "x$2" ] || exit 1;  \
 		if [ "xOK" = "x$2" ]; then \
-		  ./$${e%.lat}; \
+		  INPUT=/dev/null; \
+		  if [ -e $${e%.lat}.input ]; then \
+			INPUT=$${e%.lat}.input; \
+		  fi; \
+		  ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output; \
+		  DIFF=$$(diff -nq $${e%.lat}.output "${BUILD}"/output); \
+		  if [ "x$$DIFF" != "x" ]; then \
+			git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output &> /dev/null; \
+		  fi; \
 		fi; \
 	done
 endef
@@ -40,6 +48,7 @@ endef
 testGood: Latte
 	$(call test_examples,good,OK)
 	$(call test_examples,good/basic,OK)
+	$(call test_examples,good/input,OK)
 
 #$(call test_examples,good/arrays,OK)	
 #$(call test_examples,good/struct,OK)

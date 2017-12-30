@@ -75,13 +75,13 @@ separator  Type "," ;
 
 -- Expressions ---------------------------------------------
 
-Index.    EIndex ::= Expr6 "[" Expr "]" ;
+Subs.      ESubs ::= Expr6 "[" Expr "]" ;
 
-IndexR.   EIndex ::= EIndex "[" Expr "]" ;
+SubsR.     ESubs ::= ESubs "[" Expr "]" ;
 
 ENull.     Expr8 ::= "(" Type ")null" ;
 
-EIndex.    Expr8 ::= EIndex ;
+ESubs.     Expr8 ::= ESubs ;
 
 EVar.      Expr8 ::= Ident ;
 

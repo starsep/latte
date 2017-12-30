@@ -45,14 +45,14 @@ typeOf q =
       return Bool
     EOr b1 b2 -> checkBExprOp b1 b2
     EAnd b1 b2 -> checkBExprOp b1 b2
-    EIndex index' ->
-      case index' of
-        Index expr index -> do
+    ESubs subs' ->
+      case subs' of
+        Subs expr index -> do
           assertNumericExpr index
           typeOfArray expr
-        IndexR index e -> do
-          assertNumericExpr e
-          let expr = EIndex index
+        SubsR subs index -> do
+          assertNumericExpr index
+          let expr = ESubs subs
           typeOfArray expr
     EArray t e -> do
       assertArrayableType t
@@ -203,7 +203,7 @@ typecheckAss lvalue expr = do
   rtype <- typeOf expr
   case lvalue of
     EVar _ -> assertType expr ltype
-    EIndex _ ->
+    ESubs _ ->
       when (ltype /= rtype) $
         showError $ Errors.notMatchingTypeIndex ltype rtype
     EField object name -> do

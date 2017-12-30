@@ -85,6 +85,7 @@ standardFunctions =
     (Ident "readString", Fun Str []),
     -- INTERNAL FUNCTIONS:
     (Ident "_arrayLength", Fun Int [Str]),
+    (Ident "_arrayPtr", Fun Str [Str, Int]),
     (Ident "_copyStr", Fun Str [Str]),
     (Ident "_concat", Fun Str [Str, Str]),
     (Ident "_new", Fun Str [Int]),

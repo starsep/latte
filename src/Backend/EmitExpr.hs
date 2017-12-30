@@ -51,8 +51,8 @@ emitExpr q = case q of
   ENull t -> do
     tell [Push "0"]
     return t
-  EIndex index -> return Int -- TODO: implement
-  EVar ident -> emitEVar ident
+  ESubs subs -> dereference q
+  EVar ident -> dereference q
   EMethod lv ident args -> return Int -- TODO: implement
   EField lv ident -> do
     t <- localRWS $ emitExpr lv
@@ -168,9 +168,9 @@ emitEVarPtr (Ident name) = do
       Push r]
   return t
 
-emitEVar :: Ident -> CMonad Type
-emitEVar ident = do
-  t <- emitEVarPtr ident
+dereference :: Expr -> CMonad Type
+dereference expr = do
+  t <- emitLValue expr
   localReserve 1 $ \[r] ->
     tell [
       Pop r,
@@ -178,9 +178,28 @@ emitEVar ident = do
       Push r]
   return t
 
-emitLValue :: Expr -> CMonad ()
-emitLValue (EVar ident) = void $ emitEVarPtr ident
+callArrayPtr :: Expr -> CMonad ()
+callArrayPtr index = do
+  let a1 : a2 : _ = argRegisters
+  emitExpr index
+  localReserveReg a1 $
+    localReserveReg a2 $
+      tell [
+        Pop a2,
+        Pop a1,
+        Call "_arrayPtr",
+        Push resultReg]
 
+emitLValue :: Expr -> CMonad Type
+emitLValue (EVar ident) = emitEVarPtr ident
+emitLValue (ESubs (Subs array index)) = do
+  (Array t) <- emitExpr array
+  callArrayPtr index
+  return t
+emitLValue (ESubs (SubsR subs index)) = do
+  t <- emitLValue $ ESubs subs
+  callArrayPtr index
+  return $ Array t
 moveArgsToRegisters :: Int -> Int -> CMonad ()
 moveArgsToRegisters i n
   | i == n = return ()

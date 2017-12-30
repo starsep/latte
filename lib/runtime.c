@@ -33,8 +33,10 @@ void *_new(long long size) {
   return res;
 }
 
-long long _arrayLength(long long *array) {
-  return array[0];
+long long _arrayLength(long long *array) { return array[0]; }
+
+long long *_arrayPtr(long long *array, long long index) {
+  return &array[index + 1];
 }
 
 void *_newArray(long long size) {

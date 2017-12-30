@@ -1,0 +1,20 @@
+int main() {
+  foo(1, "two", 3, 4, "five", 6, 7, 8, 9, "ten", 11, 12);
+  return 0;
+}
+
+void foo(int a, string b, int c, int d, string e, int f, int g, int h, int i,
+         string j, int k, int l) {
+  printInt(a);
+  printString(b);
+  printInt(c);
+  printInt(d);
+  printString(e);
+  printInt(f);
+  printInt(g);
+  printInt(h);
+  printInt(i);
+  printString(j);
+  printInt(k);
+  printInt(l);
+}
