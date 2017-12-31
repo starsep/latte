@@ -15,7 +15,7 @@ void printString(char *s) { puts(s); }
 
 long long readInt() {
   long long result;
-  scanf("%lld", &result);
+  scanf("%lld  ", &result);
   return result;
 }
 
@@ -23,6 +23,7 @@ char *readString() {
   char *res = NULL;
   size_t n = 0;
   getline(&res, &n, stdin);
+  res[strlen(res) - 1] = '\0'; // remove trailing \n
   _gcIncr(res);
   return res;
 }

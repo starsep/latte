@@ -6,6 +6,7 @@ import Control.Monad
 import Control.Monad.RWS (RWS, ask, put, get, listen, pass)
 import Data.List
 import Data.Map ((!), Map)
+import qualified Data.Map as Map
 import Debug.Trace
 import Locals
 import Typechecker (TypecheckerOutput)
@@ -72,6 +73,12 @@ putVars vars = do
   (name, labelId, strings, regs, _) <- get
   put (name, labelId, strings, regs, vars)
 
+initVars :: VarState
+initVars = ([Map.empty], Address 8)
+
+emptyVars :: CMonad ()
+emptyVars = putVars initVars
+
 askTypedFns :: CMonad TypedFnDefs
 askTypedFns = do
   (typed, _) <- ask
@@ -130,8 +137,11 @@ localReserve n action = do
    return res
 
 localReserveReg :: Register -> CMonad a -> CMonad a
-localReserveReg reg action = do
-  reserveReg reg
+localReserveReg reg = localReserveRegs [reg]
+
+localReserveRegs :: Registers -> CMonad a -> CMonad a
+localReserveRegs regs action = do
+  forM_ regs reserveReg
   res <- action
-  freeRegs [reg]
+  freeRegs regs
   return res

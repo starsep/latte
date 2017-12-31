@@ -36,10 +36,8 @@ define test_examples
 			INPUT=$${e%.lat}.input; \
 		  fi; \
 		  ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output; \
-		  DIFF=$$(diff -nq $${e%.lat}.output "${BUILD}"/output); \
-		  if [ "x$$DIFF" != "x" ]; then \
-			git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output &> /dev/null; \
-		  fi; \
+		  cmp $${e%.lat}.output "${BUILD}"/output &> /dev/null || \
+		  git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output; \
 		fi; \
 	done
 endef

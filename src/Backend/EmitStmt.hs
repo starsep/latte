@@ -94,8 +94,9 @@ emitFor t ident e stmt = do
 
 emitDecl :: Type -> Item -> CMonad ()
 emitDecl t (Init ident expr) = do
+  void $ emitExpr expr
   emitDecl t $ NoInit ident
-  emitStmt $ Ass (EVar ident) expr
+  assign $ EVar ident
 emitDecl t (NoInit (Ident name)) = do
   (scopeVars : vars, addr) <- getVars
   let scopeVars' = Map.insert name (addr, t) scopeVars
@@ -106,7 +107,11 @@ emitDecl t (NoInit (Ident name)) = do
 emitAss :: Expr -> Expr -> CMonad ()
 emitAss lv expr = do
   _ <- emitExpr expr
-  emitLValue lv
+  assign lv
+
+assign :: Expr -> CMonad ()
+assign lv = do
+  _ <- emitLValue lv
   localReserve 2 $ \[l, e] ->
     tell [
       Pop l,

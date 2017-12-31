@@ -181,7 +181,7 @@ dereference expr = do
 callArrayPtr :: Expr -> CMonad ()
 callArrayPtr index = do
   let a1 : a2 : _ = argRegisters
-  emitExpr index
+  void $ emitExpr index
   localReserveReg a1 $
     localReserveReg a2 $
       tell [

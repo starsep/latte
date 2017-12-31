@@ -4,7 +4,6 @@ import Control.Monad
 import Data.List (isPrefixOf, partition)
 import System.Exit (exitFailure)
 import System.Environment (getArgs, getExecutablePath)
-import System.FilePath.Posix (takeBaseName)
 import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
 import Context
 import Compiler
@@ -41,7 +40,6 @@ readSource filename = do
 main :: IO ()
 main = do
     (optimizeOn, filename) <- parseArgs
-    let basename = takeBaseName filename
     source <- readSource filename
     program <- case pProgram (myLexer source) of
         Ok p -> return p
@@ -50,4 +48,4 @@ main = do
           return $ Program []
     types <- typecheck program
     hPutStrLn stderr "OK"
-    putStrLn $ compiler optimizeOn basename program types
+    putStrLn $ compiler optimizeOn program types

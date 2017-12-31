@@ -5,17 +5,18 @@ import Asm
 import CompilerState
 import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
+import EmitExpr
 import EmitStmt
 import Locals
 import Optimize
 import Typechecker (TypecheckerOutput)
 import TypecheckerPure (standardFunctionsNames)
 
-compiler :: Bool -> String -> Program -> TypecheckerOutput -> String
-compiler optimizeOn basename prog tOut =
+compiler :: Bool -> Program -> TypecheckerOutput -> String
+compiler optimizeOn prog tOut =
   let locals = localsProg prog
       initEnv = (tOut, locals)
-      initState = ("", 0, [], [], ([], Address 8))
+      initState = ("", 0, [], [], initVars)
       (_, _, output) = runRWS (compile prog) initEnv initState
       output' = if optimizeOn then optimize output else output in
   printAsm output'
@@ -35,17 +36,43 @@ emitProgram (Program topdefs) = do
 
 emitTopDef :: TopDef -> CMonad ()
 emitTopDef (FnDef _ (Ident name) args block) = do
+  emptyVars
   putName name
   funHeader
-  let argsDecl = map argDecl args
-  -- TODO: assign args
-  emitBlock $ Block $ argsDecl ++ [BStmt block]
+  emitArgs args
+  emitBlock block
   funFooter
 
-emitTopDef _ = return () -- TODO
+emitTopDef _ = return () -- TODO: classes
 
 argDecl :: Arg -> Stmt
 argDecl (Arg t ident) = Decl t [NoInit ident]
+
+emitArgs :: [Arg] -> CMonad ()
+emitArgs args = do
+  let argsDecl = map argDecl args
+      argsRegNum = min 6 $ length args
+      argsRegs = take argsRegNum argRegisters
+      argsInRegs = take argsRegNum args
+      argsWithRegs = zip argsRegs argsInRegs
+      restArgs = drop argsRegNum args
+      argsIndexes = map (*8) [2..] :: [Int]
+  forM_ argsRegs reserveReg
+  forM_ argsDecl emitStmt
+  forM_ argsWithRegs $ \(reg, Arg _ ident) -> do
+    localReserve 1 $ \[addr] -> do
+      void $ emitLValue $ EVar ident
+      tell [
+        Pop addr,
+        Mov ("[" ++ addr ++ "]") reg]
+    freeRegs [reg]
+  forM_ (zip restArgs argsIndexes) $ \(Arg _ ident, index) ->
+    localReserve 2 $ \[addr, val] -> do
+      void $ emitLValue $ EVar ident
+      tell [
+        Pop addr,
+        Mov val $ "[" ++ basePointer ++ " + " ++ show index ++ "]",
+        Mov ("[" ++ addr ++ "]") val]
 
 emitStringLiterals :: [String] -> Int -> CMonad ()
 emitStringLiterals [] _ = return ()

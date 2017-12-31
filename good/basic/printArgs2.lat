@@ -23,114 +23,59 @@ void foo0() {}
 void foo1(int a) { printInt(a); }
 
 void foo2(int a, string b) {
-  printInt(a);
+  foo1(a);
   printString(b);
 }
 
 void foo3(int a, string b, int c) {
-  printInt(a);
-  printString(b);
+  foo2(a, b);
   printInt(c);
 }
 
 void foo4(int a, string b, int c, int d) {
-  printInt(a);
-  printString(b);
-  printInt(c);
+  foo3(a, b, c);
   printInt(d);
 }
 
 void foo5(int a, string b, int c, int d, string e) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
+  foo4(a, b, c, d);
   printString(e);
 }
 
 void foo6(int a, string b, int c, int d, string e, int f) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
+  foo5(a, b, c, d, e);
   printInt(f);
 }
 
 void foo7(int a, string b, int c, int d, string e, int f, int g) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
-  printInt(f);
+  foo6(a, b, c, d, e, f);
   printInt(g);
 }
 
 void foo8(int a, string b, int c, int d, string e, int f, int g, int h) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
-  printInt(f);
-  printInt(g);
+  foo7(a, b, c, d, e, f, g);
   printInt(h);
 }
 
 void foo9(int a, string b, int c, int d, string e, int f, int g, int h, int i) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
-  printInt(f);
-  printInt(g);
-  printInt(h);
+  foo8(a, b, c, d, e, f, g, h);
   printInt(i);
 }
 
 void foo10(int a, string b, int c, int d, string e, int f, int g, int h, int i,
            string j) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
-  printInt(f);
-  printInt(g);
-  printInt(h);
-  printInt(i);
+  foo9(a, b, c, d, e, f, g, h, i);
   printString(j);
 }
 
 void foo11(int a, string b, int c, int d, string e, int f, int g, int h, int i,
            string j, int k) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
-  printInt(f);
-  printInt(g);
-  printInt(h);
-  printInt(i);
-  printString(j);
+  foo10(a, b, c, d, e, f, g, h, i, j);
   printInt(k);
 }
 
 void foo12(int a, string b, int c, int d, string e, int f, int g, int h, int i,
            string j, int k, int l) {
-  printInt(a);
-  printString(b);
-  printInt(c);
-  printInt(d);
-  printString(e);
-  printInt(f);
-  printInt(g);
-  printInt(h);
-  printInt(i);
-  printString(j);
-  printInt(k);
+  foo11(a, b, c, d, e, f, g, h, i, j, k);
   printInt(l);
 }
