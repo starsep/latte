@@ -176,7 +176,7 @@ mulOpResult Times = "rax"
 mulOpResult Div = "rax"
 mulOpResult Mod = "rdx"
 
-mulOpStmt :: MulOp -> (String -> AsmStmt)
+mulOpStmt :: MulOp -> String -> AsmStmt
 mulOpStmt Times = Mul
 mulOpStmt Div = Divide
 mulOpStmt Mod = Divide

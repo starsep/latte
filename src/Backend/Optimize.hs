@@ -43,7 +43,9 @@ optimizeStmt (Push x : Pop y : rest)
 optimizeStmt (h:t) = h : optimizeStmt t
 optimizeStmt [] = []
 
-signToAdd :: Int -> (String -> String -> AsmStmt)
+type AsmAddOp = String -> String -> AsmStmt
+
+signToAdd :: Int -> AsmAddOp
 signToAdd x = if x > 0 then Add else Sub
 
 optimizeAdd :: (String, String, String, String) ->

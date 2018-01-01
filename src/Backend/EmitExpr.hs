@@ -51,8 +51,8 @@ emitExpr q = case q of
   ENull t -> do
     tell [Push "0"]
     return t
-  ESubs subs -> dereference q
-  EVar ident -> dereference q
+  ESubs subs -> dereference $ LSubs subs
+  EVar ident -> dereference $ LVar ident
   EMethod lv ident args -> return Int -- TODO: implement
   EField lv ident -> do
     t <- localRWS $ emitExpr lv
@@ -176,9 +176,9 @@ dereferenceTop =
       Mov r $ "qword[" ++ r ++ "]",
       Push r]
 
-dereference :: Expr -> CMonad Type
-dereference expr = do
-  t <- emitLValue expr
+dereference :: LValue -> CMonad Type
+dereference lv = do
+  t <- emitLValue lv
   dereferenceTop
   return t
 
@@ -194,20 +194,21 @@ callArrayPtr index = do
         Call "_arrayPtr",
         Push resultReg]
 
-emitLValue :: Expr -> CMonad Type
-emitLValue (EVar ident) = emitEVarPtr ident
-emitLValue (ESubs (Subs array index)) = do
-  (Array t) <- emitExpr array
-  callArrayPtr index
-  return t
-emitLValue (ESubs (SubsR subs index)) = do
-  t <- emitLValue $ ESubs subs
-  dereferenceTop
-  callArrayPtr index
-  return $ Array t
+emitLValue :: LValue -> CMonad Type
+emitLValue q = case q of
+  LVar ident -> emitEVarPtr ident
+  LSubs (Subs array index) -> do
+    (Array t) <- emitExpr array
+    callArrayPtr index
+    return t
+  LSubs (SubsR subs index) -> do
+    t <- emitLValue $ LSubs subs
+    dereferenceTop
+    callArrayPtr index
+    return $ Array t
+
 moveArgsToRegisters :: Int -> Int -> CMonad ()
-moveArgsToRegisters i n
-  | i == n = return ()
-  | otherwise = do
+moveArgsToRegisters i n =
+  when (i /= n) $ do
     tell [Pop $ argRegisters !! i]
     moveArgsToRegisters (i + 1) n

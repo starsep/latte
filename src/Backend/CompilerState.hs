@@ -7,7 +7,6 @@ import Control.Monad.RWS (RWS, ask, put, get, listen, pass)
 import Data.List
 import Data.Map ((!), Map)
 import qualified Data.Map as Map
-import Debug.Trace
 import Locals
 import Typechecker (TypecheckerOutput)
 import TypecheckerState (TypedFnDefs)
@@ -20,6 +19,10 @@ type VarAddr = [Map String (Address, Type)]
 type VarState = (VarAddr, Address)
 type CState = (FName, LabelId, StringLits, Registers, VarState)
 type CMonad = RWS CEnv AsmStmts CState
+
+data LValue
+  = LVar Ident
+  | LSubs ESubs
 
 putName :: String -> CMonad ()
 putName name = do
@@ -107,19 +110,16 @@ localRWS action = do
 reserveReg :: Register -> CMonad ()
 reserveReg reg = do
   reservedRegs <- getReservedRegs
-  when (reg `elem` reservedRegs) $ do
-    let v = trace (show reg ++ " already reserved, WTF?!") ()
-    return v
+  when (reg `elem` reservedRegs) $
+    error $ show reg ++ " already reserved, WTF?!"
   putReservedRegs $ reg : reservedRegs
 
 reserveRegs :: Int -> CMonad Registers
 reserveRegs n = do
   reservedRegs <- getReservedRegs
   let available = take n $ scratchRegisters \\ reservedRegs
-  when (length available < n) $ do
-    let errorMsg = "WTF?!: couldn't reserve " ++ show n ++ " registers"
-        v = trace errorMsg ()
-    return v
+  when (length available < n) $
+    error $ "WTF?!: couldn't reserve " ++ show n ++ " registers"
   mapM_ reserveReg available
   return available
 

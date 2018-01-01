@@ -14,7 +14,7 @@ emitStmt q = case q of
   Empty -> return ()
   BStmt block -> emitBlock block
   Decl t items -> forM_ items $ emitDecl t
-  Ass lv expr -> emitAss lv expr
+  Ass left expr -> emitAss left expr
   Incr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Plus (ELitInt 1))
   Decr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Minus (ELitInt 1))
   Ret expr -> do
@@ -96,7 +96,7 @@ emitDecl :: Type -> Item -> CMonad ()
 emitDecl t (Init ident expr) = do
   void $ emitExpr expr
   emitDecl t $ NoInit ident
-  assign $ EVar ident
+  assign $ LVar ident
 emitDecl t (NoInit (Ident name)) = do
   (scopeVars : vars, addr) <- getVars
   let scopeVars' = Map.insert name (addr, t) scopeVars
@@ -104,12 +104,18 @@ emitDecl t (NoInit (Ident name)) = do
   putVars (scopeVars': vars, Address $ n + 8)
   tell [Mov (show addr) "0"]
 
-emitAss :: Expr -> Expr -> CMonad ()
-emitAss lv expr = do
-  _ <- emitExpr expr
-  assign lv
+exprToLValue :: Expr -> LValue
+exprToLValue q = case q of
+  EVar ident -> LVar ident
+  ESubs subs -> LSubs subs
+  _ -> error $ "converting " ++ show q ++ " to lvalue isn't implemented"
 
-assign :: Expr -> CMonad ()
+emitAss :: Expr -> Expr -> CMonad ()
+emitAss left expr = do
+  _ <- emitExpr expr
+  assign $ exprToLValue left
+
+assign :: LValue -> CMonad ()
 assign lv = do
   _ <- emitLValue lv
   localReserve 2 $ \[l, e] ->

@@ -61,14 +61,14 @@ emitArgs args = do
   forM_ argsDecl emitStmt
   forM_ argsWithRegs $ \(reg, Arg _ ident) -> do
     localReserve 1 $ \[addr] -> do
-      void $ emitLValue $ EVar ident
+      void $ emitLValue $ LVar ident
       tell [
         Pop addr,
         Mov ("[" ++ addr ++ "]") reg]
     freeRegs [reg]
   forM_ (zip restArgs argsIndexes) $ \(Arg _ ident, index) ->
     localReserve 2 $ \[addr, val] -> do
-      void $ emitLValue $ EVar ident
+      void $ emitLValue $ LVar ident
       tell [
         Pop addr,
         Mov val $ "[" ++ basePointer ++ " + " ++ show index ++ "]",
