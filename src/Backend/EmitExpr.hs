@@ -168,14 +168,18 @@ emitEVarPtr (Ident name) = do
       Push r]
   return t
 
-dereference :: Expr -> CMonad Type
-dereference expr = do
-  t <- emitLValue expr
+dereferenceTop :: CMonad ()
+dereferenceTop =
   localReserve 1 $ \[r] ->
     tell [
       Pop r,
       Mov r $ "qword[" ++ r ++ "]",
       Push r]
+
+dereference :: Expr -> CMonad Type
+dereference expr = do
+  t <- emitLValue expr
+  dereferenceTop
   return t
 
 callArrayPtr :: Expr -> CMonad ()
@@ -198,6 +202,7 @@ emitLValue (ESubs (Subs array index)) = do
   return t
 emitLValue (ESubs (SubsR subs index)) = do
   t <- emitLValue $ ESubs subs
+  dereferenceTop
   callArrayPtr index
   return $ Array t
 moveArgsToRegisters :: Int -> Int -> CMonad ()

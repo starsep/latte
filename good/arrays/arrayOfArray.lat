@@ -1,0 +1,11 @@
+int main() {
+  int[][] x = new int[][3];
+  int i = 0;
+  while (i < 3) {
+    x[i] = new int[4];
+    i++;
+  }
+  x[2][2] = 42;
+  for (int[] y : x) printInt(y[2]);
+  return 0;
+}

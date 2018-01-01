@@ -1,0 +1,13 @@
+int main() {
+  int[] x = new int[3];
+  x[0] = 42;
+  x[1] = 13;
+  x[2] = 5;
+  for (int y : x) {
+    for (int z : x) {
+      printInt(y);
+      printInt(z);
+    }
+  }
+  return 0;
+}

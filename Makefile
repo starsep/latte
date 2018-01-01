@@ -47,8 +47,8 @@ testGood: Latte
 	$(call test_examples,good,OK)
 	$(call test_examples,good/basic,OK)
 	$(call test_examples,good/input,OK)
+	$(call test_examples,good/arrays,OK)
 
-#$(call test_examples,good/arrays,OK)	
 #$(call test_examples,good/struct,OK)
 #$(call test_examples,good/objects1,OK)
 #$(call test_examples,good/objects2,OK)

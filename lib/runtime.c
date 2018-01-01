@@ -29,7 +29,7 @@ char *readString() {
 }
 
 void *_new(long long size) {
-  void *res = calloc(8, size);
+  void *res = calloc(size, 8);
   _gcIncr(res);
   return res;
 }
@@ -37,12 +37,17 @@ void *_new(long long size) {
 long long _arrayLength(long long *array) { return array[0]; }
 
 long long *_arrayPtr(long long *array, long long index) {
-  return &array[index + 1];
+  long long *res = array + index + 1;
+  // TODO: remove debug
+  // printf("PTR of %lld with index %lld is %lld\n", (long long)array, index, (long long)res);
+  return res;
 }
 
 void *_newArray(long long size) {
   void *res = _new(size + 1);
   ((long long *)res)[0] = size;
+  // TODO: remove debug
+  // printf("CREATING(size = %lld): %lld\n", size, (long long)res);
   return res;
 }
 
