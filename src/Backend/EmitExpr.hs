@@ -143,12 +143,14 @@ emitExpr q = case q of
 
 emitEApp :: Ident -> [Expr] -> CMonad Type
 emitEApp ident@(Ident name) args = do
+  let argsLen = length args
+      argsRegs = take (min 6 argsLen) argRegisters
+      argsToRemove = argsLen - 6
   forM_ (reverse args) emitExpr
-  moveArgsToRegisters 0 $ min 6 $ length args
+  tell $ map Pop argsRegs
   tell [Call name]
-  let argsToPop = length args - 6
-  when (argsToPop > 0) $
-    tell [Add stackPointer $ show $ argsToPop * 8]
+  when (argsToRemove > 0) $
+    tell [Add stackPointer $ show $ argsToRemove * 8]
   typed <- askTypedFns
   let t = typed ! ident
   unless (t == Void) $
@@ -184,15 +186,14 @@ dereference lv = do
 
 callArrayPtr :: Expr -> CMonad ()
 callArrayPtr index = do
-  let a1 : a2 : _ = argRegisters
+  let regs@[a1, a2] = take 2 argRegisters
   void $ emitExpr index
-  localReserveReg a1 $
-    localReserveReg a2 $
-      tell [
-        Pop a2,
-        Pop a1,
-        Call "_arrayPtr",
-        Push resultReg]
+  localReserveRegs regs $
+    tell [
+      Pop a2,
+      Pop a1,
+      Call "_arrayPtr",
+      Push resultReg]
 
 emitLValue :: LValue -> CMonad Type
 emitLValue q = case q of
@@ -206,9 +207,3 @@ emitLValue q = case q of
     dereferenceTop
     callArrayPtr index
     return $ Array t
-
-moveArgsToRegisters :: Int -> Int -> CMonad ()
-moveArgsToRegisters i n =
-  when (i /= n) $ do
-    tell [Pop $ argRegisters !! i]
-    moveArgsToRegisters (i + 1) n

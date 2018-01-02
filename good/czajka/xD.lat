@@ -1,0 +1,11 @@
+// Patryk Czajka
+
+int main() {
+    string a = "xD";
+    for(int x: new int[6]) {
+        printString(a);
+        a = a + " " + a;
+    }
+    printString(a);
+    return 0;
+}

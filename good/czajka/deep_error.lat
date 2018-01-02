@@ -1,0 +1,12 @@
+// Patryk Czajka
+
+int foo(int x) {
+    if(x == 0) error();
+    printInt(x);
+    return foo(x - 1);
+}
+
+int main() {
+    foo(100);
+    return 0;
+}

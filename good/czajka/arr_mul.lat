@@ -1,0 +1,23 @@
+// Patryk Czajka
+
+int main(){
+    int[] a = new int[8];
+    a[1] = 1;
+    int j = 1;
+    while(j < 4) {
+        a[2 * j] = a[j] * 2;
+        a[2 * j + 1] = a[j] * 2;
+        j++;
+    }
+
+    j = 0;
+    while(j < a.length) {
+        printString("=========");
+        printInt(j);
+        printInt((a[j] * 3) / 3);
+        printInt(a[j] % 5 + 4);
+        j++;
+    }
+    printString("OK");
+    return 0;
+}
