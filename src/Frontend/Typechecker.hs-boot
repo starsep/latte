@@ -1,6 +1,6 @@
 module Typechecker where
 
 import AbsLatte
-import TypecheckerState
+import Env
 
 typeOf :: Expr -> TCMonad Type

@@ -1,4 +1,4 @@
-module CompilerState where
+module State where
 
 import AbsLatte
 import Asm
@@ -7,9 +7,9 @@ import Control.Monad.RWS (RWS, ask, put, get, listen, pass)
 import Data.List
 import Data.Map ((!), Map)
 import qualified Data.Map as Map
+import Env (TypedFnDefs)
 import Locals
 import Typechecker (TypecheckerOutput)
-import TypecheckerState (TypedFnDefs)
 
 type CEnv = (TypecheckerOutput, Locals)
 type FName = String

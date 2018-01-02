@@ -9,8 +9,8 @@ FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
 PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
-FRONTEND_SOURCES=Context Errors Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
-BACKEND_SOURCES=Compiler Asm EmitExpr EmitStmt CompilerState Optimize Label Locals GC
+FRONTEND_SOURCES=Context Errors Print Typechecker Pure Env Assert
+BACKEND_SOURCES=Compiler Asm EmitExpr EmitStmt State Optimize Label Locals GC
 SOURCES=Main $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
 			   $(BUILD)/Frontend/Typechecker.hs-boot $(BUILD)/Frontend/Print.hs-boot

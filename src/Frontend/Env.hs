@@ -1,4 +1,4 @@
-module TypecheckerState where
+module Env where
 
 import AbsLatte
 import Context

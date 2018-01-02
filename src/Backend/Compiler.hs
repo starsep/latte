@@ -2,15 +2,15 @@ module Compiler (compiler) where
 
 import AbsLatte
 import Asm
-import CompilerState
 import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
 import EmitExpr
 import EmitStmt
 import Locals
 import Optimize
+import Pure (standardFunctionsNames)
+import State
 import Typechecker (TypecheckerOutput)
-import TypecheckerPure (standardFunctionsNames)
 
 compiler :: Bool -> Program -> TypecheckerOutput -> String
 compiler optimizeOn prog tOut =

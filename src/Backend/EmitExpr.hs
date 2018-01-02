@@ -2,12 +2,12 @@ module EmitExpr where
 
 import AbsLatte
 import Asm
-import CompilerState
 import Control.Monad
 import Control.Monad.RWS (tell)
 import Data.Map ((!))
 import qualified Data.Map as Map
 import Label
+import State
 
 binaryOp :: Expr -> Expr ->
   (String -> String -> AsmStmt) -> CMonad ()

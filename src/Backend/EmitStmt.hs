@@ -2,13 +2,13 @@ module EmitStmt where
 
 import AbsLatte
 import Asm
-import CompilerState
 import Control.Monad
 import Control.Monad.RWS (tell)
 import qualified Data.Map as Map
 import EmitExpr
 import GC
 import Label
+import State
 
 emitStmt :: Stmt -> CMonad ()
 emitStmt q = case q of

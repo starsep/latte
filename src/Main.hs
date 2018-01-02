@@ -1,17 +1,17 @@
 module Main (main) where
 
+import AbsLatte
 import Control.Monad
-import Data.List (isPrefixOf, partition)
-import System.Exit (exitFailure)
-import System.Environment (getArgs, getExecutablePath)
-import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
 import Context
 import Compiler
-import ParLatte
-import AbsLatte
+import Data.List (isPrefixOf, partition)
 import ErrM
-import Typechecker (typecheck)
+import ParLatte
 import Print (parsing)
+import System.Environment (getArgs, getExecutablePath)
+import System.Exit (exitFailure)
+import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
+import Typechecker (typecheck)
 
 -- import System.Exit (die)
 -- doesn't work on ghc 7.6.3

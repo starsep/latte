@@ -2,8 +2,10 @@ module GC where
 
 import AbsLatte
 import Asm
-import CompilerState
+-- import Control.Monad
 import Control.Monad.RWS (tell)
+--import qualified Data.Map as Map
+import State
 
 isGCType :: Type -> Bool
 isGCType t = case t of
@@ -15,11 +17,11 @@ gcScopeVars :: CMonad ()
 gcScopeVars = do
   (vars, _) <- getVars
   return ()
-  --forM_ (Map.toList $ head vars) $ \(name, (addr, t)) ->
-    --when (isGCType t) $ do
+  -- forM_ (Map.toList $ head vars) $ \(name, (addr, t)) ->
+    -- when (isGCType t) $ do
       -- TODO: GC
       -- tell [Push $ show addr]
-      -- callGcDecr
+      -- gcDecr
 
 callGcFun :: String -> CMonad ()
 callGcFun name = do

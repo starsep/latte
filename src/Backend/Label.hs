@@ -1,7 +1,7 @@
 module Label where
 
 import Asm
-import CompilerState
+import State
 import Control.Monad.RWS (tell)
 
 endLabel :: CMonad String

@@ -1,15 +1,15 @@
-module TypecheckerAssert where
+module Assert where
 
 import {-# SOURCE #-} Typechecker (typeOf)
 
 import AbsLatte
 import Context
 import Control.Monad
-import Errors
-import TypecheckerPure
-import TypecheckerState
-import qualified Data.Map as Map
 import Data.Map ((!))
+import qualified Data.Map as Map
+import Env
+import Errors
+import Pure
 
 assertCorrectMain :: TypedFnDefs -> IO ()
 assertCorrectMain typedFns = do

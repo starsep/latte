@@ -1,18 +1,18 @@
 module Typechecker (typecheck, typeOf, TypecheckerOutput()) where
 
 import AbsLatte
+import Assert
+import Context
 import Control.Monad
 import Control.Monad.RWS (get, put, runRWST)
 import qualified Data.Map as Map
+import Data.Int
 import Data.Map ((!))
 import Data.Maybe
+import Env
 import qualified Errors
 import PrintLatte (printTree)
-import Data.Int
-import Context
-import TypecheckerAssert
-import TypecheckerPure
-import TypecheckerState
+import Pure
 
 type TypecheckerOutput = TypedFnDefs
 

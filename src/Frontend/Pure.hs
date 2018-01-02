@@ -1,8 +1,8 @@
-module TypecheckerPure where
+module Pure where
 
 import AbsLatte
 import qualified Data.Map as Map
-import TypecheckerState
+import Env
 
 argsToTypes :: [Arg] -> [Type]
 argsToTypes = map (\arg -> case arg of Arg t _ -> t)
