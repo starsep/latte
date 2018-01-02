@@ -101,8 +101,10 @@ funFooter :: CMonad ()
 funFooter = do
   name <- getName
   locSize <- localsSize
+  tell [Label $ name ++ "$end"]
+  when (name == "main") $
+    tell [Call "_gcClean"]
   tell [
-    Label $ name ++ "$end",
     Add stackPointer locSize,
     Pop basePointer,
     Return]

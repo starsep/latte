@@ -2,6 +2,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define DEBUG 0
+#define fprintf if(DEBUG)fprintf
+
+typedef long long Int64;
+typedef void *AnyPtr;
+typedef char *String;
+
 void _gcIncr(void *ptr);
 
 void error() {
@@ -9,60 +16,74 @@ void error() {
   exit(1);
 }
 
-void printInt(long long x) { printf("%lld\n", x); }
+void printInt(Int64 x) { printf("%lld\n", x); }
 
-void printString(char *s) { puts(s); }
+void printString(String s) { puts(s); }
 
-long long readInt() {
-  long long result;
+void _free(AnyPtr ptr) {
+  fprintf(stderr, "FREEING %lld\n", (Int64)ptr);
+  free(ptr);
+}
+
+AnyPtr *_malloc(Int64 size) {
+  return malloc(size);
+}
+
+AnyPtr *_calloc(Int64 num, Int64 size) {
+  return calloc(num, size);
+}
+
+Int64 readInt() {
+  Int64 result;
   scanf("%lld  ", &result);
   return result;
 }
 
-char *readString() {
-  char *res = NULL;
+String readString() {
+  String res = NULL;
   size_t n = 0;
   getline(&res, &n, stdin);
-  res[strlen(res) - 1] = '\0'; // remove trailing \n
+  res[strlen(res) - 1] = '\0';  // remove trailing \n
   _gcIncr(res);
   return res;
 }
 
-void *_new(long long size) {
-  void *res = calloc(size, 8);
+void *_new(Int64 size) {
+  void *res = _calloc(size, 8);
   _gcIncr(res);
   return res;
 }
 
-long long _arrayLength(long long *array) { return array[0]; }
+Int64 _arrayLength(Int64 *array) { return array[0]; }
 
-long long *_arrayPtr(long long *array, long long index) {
-  long long *res = array + index + 1;
+Int64 *_arrayPtr(Int64 *array, Int64 index) {
+  Int64 *res = array + index + 1;
   // TODO: remove debug
-  // printf("PTR of %lld with index %lld is %lld\n", (long long)array, index, (long long)res);
+  // fprintf(stderr, "PTR of %lld with index %lld is %lld\n", (Int64)array, index, (long
+  // long)res);
   return res;
 }
 
-void *_newArray(long long size) {
+void *_newArray(Int64 size) {
   void *res = _new(size + 1);
-  ((long long *)res)[0] = size;
+  ((Int64 *)res)[0] = size;
   // TODO: remove debug
-  // printf("CREATING(size = %lld): %lld\n", size, (long long)res);
+  // fprintf(stderr, "CREATING(size = %lld): %lld\n", size, (Int64)res);
   return res;
 }
 
-char *_copyStr(const char *s) {
+String _copyStr(const String s) {
   int len = strlen(s) + 1;
-  char *res = (char *)malloc(len);
+  String res = (String)_malloc(len);
   _gcIncr(res);
   strcpy(res, s);
   return res;
 }
 
-char *_concat(const char *s1, const char *s2) {
+String _concat(const String s1, const String s2) {
   const int len1 = strlen(s1);
   const int len = len1 + strlen(s2) + 1;
-  char *res = (char *)malloc(len);
+  String res = (String)_malloc(len);
   _gcIncr(res);
   strcpy(res, s1);
   strcpy(res + len1, s2);
@@ -81,7 +102,7 @@ static gcCounter *gcFirst = NULL;
 static gcCounter *gcLast = NULL;
 
 static gcCounter *_gcInit(void *ptr) {
-  gcCounter *res = (gcCounter *)malloc(sizeof(gcCounter));
+  gcCounter *res = (gcCounter *)_malloc(sizeof(gcCounter));
   res->ptr = ptr;
   res->count = 1;
   res->next = NULL;
@@ -100,6 +121,7 @@ static gcCounter *_gcFind(void *ptr) {
 }
 
 void _gcIncr(void *ptr) {
+  fprintf(stderr, "GC INCR: %lld\n", (Int64)ptr);
   if (gcFirst == NULL) {
     gcFirst = gcLast = _gcInit(ptr);
     return;
@@ -114,12 +136,18 @@ void _gcIncr(void *ptr) {
 }
 
 void _gcDecr(void *ptr) {
+  fprintf(stderr, "GC DECR: %lld\n", (Int64)ptr);
+  if (ptr == NULL) return;
   gcCounter *g = _gcFind(ptr);
+  if (g == NULL) {
+    fprintf(stderr, "Trying to decr not found ptr = %lld\n", (Int64)ptr);
+    return;
+  }
   g->count--;
   if (g->count == 0) {
-    free(g->ptr);
+    _free(g->ptr);
     gcCounter *next = g->next;
-    free(g);
+    _free(g);
     if (g == gcFirst) {
       gcFirst = next;
       if (next == NULL) {
@@ -142,7 +170,8 @@ void _gcClean() {
   gcCounter *g = gcFirst;
   while (g != NULL) {
     gcCounter *next = g->next;
-    free(g);
+    _free(g->ptr);
+    _free(g);
     g = next;
   }
 }

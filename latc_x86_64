@@ -27,4 +27,4 @@ TMP="build/tmp.o"
 
 ./Latte "$SOURCE" "${FLAGS[@]}" > "$ASSEMBLY"
 nasm -f elf64 -F dwarf -g "$ASSEMBLY" -o "$TMP"
-"$CC" -o "$OUTPUT" -g lib/runtime.o "$TMP"
+"$CC" -o "$OUTPUT" -g "$TMP" lib/runtime.o

@@ -10,7 +10,7 @@ PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
 FRONTEND_SOURCES=Context Errors Print Typechecker TypecheckerPure TypecheckerState TypecheckerAssert
-BACKEND_SOURCES=Compiler Asm EmitExpr EmitStmt CompilerState Optimize Label Locals
+BACKEND_SOURCES=Compiler Asm EmitExpr EmitStmt CompilerState Optimize Label Locals GC
 SOURCES=Main $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
 			   $(BUILD)/Frontend/Typechecker.hs-boot $(BUILD)/Frontend/Print.hs-boot
@@ -35,7 +35,8 @@ define test_examples
 		  if [ -e $${e%.lat}.input ]; then \
 			INPUT=$${e%.lat}.input; \
 		  fi; \
-		  ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output; \
+		  valgrind ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output 2> "${BUILD}"/val; \
+		  grep "definitely lost\|still reachable" "${BUILD}"/val; \
 		  cmp $${e%.lat}.output "${BUILD}"/output &> /dev/null || \
 		  git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output; \
 		fi; \
@@ -88,7 +89,7 @@ $(BNFC_SOURCES): src/Latte.cf
 	alex -g LexLatte.x
 
 lib/runtime.o: lib/runtime.c
-	gcc -c -o $@ $<
+	gcc -g -c -o $@ $<
 
 pack:
 	tar czvf $(PACK_NAME) $(FILES_TO_PACK)

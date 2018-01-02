@@ -152,7 +152,7 @@ emitEApp ident@(Ident name) args = do
   when (argsToRemove > 0) $
     tell [Add stackPointer $ show $ argsToRemove * 8]
   typed <- askTypedFns
-  let t = typed ! ident
+  let (Fun t _) = typed ! ident
   unless (t == Void) $
     localReserveReg resultReg $
       tell [Push resultReg]
@@ -203,7 +203,7 @@ emitLValue q = case q of
     callArrayPtr index
     return t
   LSubs (SubsR subs index) -> do
-    t <- emitLValue $ LSubs subs
+    (Array t) <- emitLValue $ LSubs subs
     dereferenceTop
     callArrayPtr index
-    return $ Array t
+    return t

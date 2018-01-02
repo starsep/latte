@@ -7,6 +7,7 @@ import Control.Monad
 import Control.Monad.RWS (tell)
 import qualified Data.Map as Map
 import EmitExpr
+import GC
 import Label
 
 emitStmt :: Stmt -> CMonad ()
@@ -20,8 +21,8 @@ emitStmt q = case q of
   Ret expr -> do
     _ <- emitExpr expr
     tell [Pop resultReg]
-    jumpEndLabel
-  VRet -> jumpEndLabel
+    emitReturn
+  VRet -> emitReturn
   Cond expr stmt -> do
     _ <- emitExpr expr
     afterLabel <- ifLabel
@@ -65,12 +66,18 @@ emitStmt q = case q of
     unless (t == Void) $
       tell [Add stackPointer "8"]
 
+emitReturn :: CMonad ()
+emitReturn = do
+  gcScopeVars
+  jumpEndLabel
+
 emitBlock :: Block -> CMonad ()
 emitBlock (Block stmts) = do
   (vars, nextVar) <- getVars
   putVars (Map.empty : vars, nextVar)
   forM_ stmts emitStmt
   (vars', nextVar') <- getVars
+  gcScopeVars
   putVars (tail vars', nextVar')
 
 emitFor :: Type -> Ident -> Expr -> Stmt -> CMonad ()
@@ -96,7 +103,7 @@ emitDecl :: Type -> Item -> CMonad ()
 emitDecl t (Init ident expr) = do
   void $ emitExpr expr
   emitDecl t $ NoInit ident
-  assign $ LVar ident
+  assign t $ LVar ident
 emitDecl t (NoInit (Ident name)) = do
   (scopeVars : vars, addr) <- getVars
   let scopeVars' = Map.insert name (addr, t) scopeVars
@@ -112,11 +119,17 @@ exprToLValue q = case q of
 
 emitAss :: Expr -> Expr -> CMonad ()
 emitAss left expr = do
-  _ <- emitExpr expr
-  assign $ exprToLValue left
+  t <- emitExpr expr
+  assign t $ exprToLValue left
 
-assign :: LValue -> CMonad ()
-assign lv = do
+assign :: Type -> LValue -> CMonad ()
+assign t lv = do
+  when (isGCType t) $ do
+    tell [Push $ "[" ++ stackPointer ++ "]"]
+    gcIncr
+    -- TODO: GC
+    -- void $ dereference lv
+    -- gcDecr
   _ <- emitLValue lv
   localReserve 2 $ \[l, e] ->
     tell [
