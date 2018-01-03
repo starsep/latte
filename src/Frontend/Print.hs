@@ -10,6 +10,8 @@ import System.IO (stderr, hPutStr, hPutStrLn, hPrint)
 
 type ErrorFun = Context -> IO ()
 
+type FunHeader = (Type, Ident, [Arg])
+
 escapeChar :: Char
 escapeChar = chr 27
 
@@ -19,6 +21,12 @@ typeColor :: String
 typeColor = escapeChar : "[34;1m"
 exprColor :: String
 exprColor = escapeChar : "[35;1m"
+
+funString :: FunHeader -> String
+funString (out, name, args) =
+  let typeOfArg (Arg t _) = t
+      types = map typeOfArg args in
+  typeString out ++ " " ++ identString name ++ typesString types
 
 typeString :: Type -> String
 typeString t =

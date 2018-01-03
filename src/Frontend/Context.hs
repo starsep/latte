@@ -32,10 +32,8 @@ isNotStmt contextItem = case contextItem of
   _ -> True
 
 instance Show ContextItem where
-  show (CFun outType i args) = "In function ‘" ++
-    let typeOfArg (Arg t _) = t
-        types = map typeOfArg args in
-    typeString outType ++ " " ++ identString i ++ typesString types ++ "’:"
+  show (CFun outType i args) =
+    "In function ‘" ++ funString (outType, i, args) ++ "’:"
   show (CClass name) = "In " ++ classString name ++ ":"
   show (CWhile bExpr) = insideExpr "while" bExpr
   show (CIf bExpr) = insideExpr "if" bExpr

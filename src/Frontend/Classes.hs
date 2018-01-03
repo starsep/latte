@@ -106,7 +106,30 @@ isFieldConflict f (Field _ f2) = f == f2
 isFieldConflict f _ = False
 
 checkMethod :: Type -> Ident -> [Arg] -> Block -> TCMonad ()
-checkMethod out name args body = return ()
+checkMethod out name args body = do
+  className <- askIdent
+  checkVirtualMethod className (out, name, args)
+
+checkVirtualMethod :: Ident -> (Type, Ident, [Arg]) -> TCMonad ()
+checkVirtualMethod className method = do
+  parent <- classParent className
+  classDefs <- askClassDefs
+  name <- askIdent
+  when (name /= className) $ do
+    let methodConfs = filter (isMethodConflict method) (classDefs ! className)
+    unless (null methodConfs) $ do
+      let (Method out' name' args' _) = head methodConfs
+      showError $ Errors.methodConflict method className (out', name', args')
+  when (isJust parent) $ do
+    let to = fromJust parent
+    checkVirtualMethod to method
+
+isMethodConflict :: (Type, Ident, [Arg]) -> ClassProp -> Bool
+isMethodConflict (out, name, args) (Method out' name' args' _) =
+  let typeOfArg (Arg t _) = t
+      types = map typeOfArg in
+  name == name' && (out /= out' || types args /= types args')
+isMethodConflict _ _ = False
 
 checkProp :: ClassProp -> TCMonad ()
 checkProp (Method out name args body) = checkMethod out name args body

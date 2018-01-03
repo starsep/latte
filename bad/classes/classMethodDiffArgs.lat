@@ -1,0 +1,16 @@
+class A {
+  void f(int x) {}
+}
+
+class B extends A {
+  int x;
+}
+
+class C extends B {
+  void f(string x) {}
+}
+
+
+int main() {
+  return 0;
+}

@@ -76,6 +76,11 @@ methodCallOn object t name args = typecheck $ "trying to invoke method " ++
   identString name ++ " on " ++ exprString object ++ typeOfString t ++
   "with args: " ++ exprsString args
 
+methodConflict :: FunHeader -> Ident -> FunHeader -> ErrorFun
+methodConflict method className method' = typecheck $
+  "definition of method " ++ funString method ++ " conflicts with " ++
+  funString method' ++ " defined at " ++ classString className
+
 multipleProps :: Ident -> ErrorFun
 multipleProps ident =
     typecheck $ "multiple definitions of property " ++ identString ident
