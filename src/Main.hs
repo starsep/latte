@@ -4,6 +4,7 @@ import AbsLatte
 import Control.Monad
 import Context
 import Compiler
+import Check (check)
 import Data.List (isPrefixOf, partition)
 import ErrM
 import ParLatte
@@ -11,7 +12,6 @@ import Print (parsing)
 import System.Environment (getArgs, getExecutablePath)
 import System.Exit (exitFailure)
 import System.IO (openFile, IOMode(ReadMode), hGetContents, hPutStrLn, stderr)
-import Typechecker (typecheck)
 
 -- import System.Exit (die)
 -- doesn't work on ghc 7.6.3
@@ -46,6 +46,6 @@ main = do
         Bad msg -> do
           parsing msg $ Context [CParLex]
           return $ Program []
-    types <- typecheck program
+    types <- check program
     hPutStrLn stderr "OK"
     putStrLn $ compiler optimizeOn program types

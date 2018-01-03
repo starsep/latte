@@ -32,9 +32,16 @@ badRetType :: Expr -> Type -> Type -> ErrorFun
 badRetType e t rt = typecheck $ "returning " ++ exprString e ++
   typeOfString t ++ "in function returning " ++ typeString rt
 
+classCycle :: Ident -> ErrorFun
+classCycle ident = typecheck $ classString ident ++ " is in cycle"
+
 diffTypesBinOp :: String -> Type -> Type -> ErrorFun
 diffTypesBinOp op t1 t2 = typecheck $ op ++ " on different types: " ++
   typeString t1 ++ " and " ++ typeString t2
+
+extendsUnknownClass :: Ident -> Ident -> ErrorFun
+extendsUnknownClass ident extends = typecheck $ classString ident ++
+  " extends unknown " ++ classString extends
 
 expectedExpression :: Expr -> Type -> Type -> ErrorFun
 expectedExpression e t expected = typecheck $ "expected expression of type " ++
@@ -43,6 +50,10 @@ expectedExpression e t expected = typecheck $ "expected expression of type " ++
 fieldAsMethod :: Ident -> Ident -> ErrorFun
 fieldAsMethod className name = typecheck $ "trying to use field " ++
   identString name ++ " of " ++ classString className ++ " as method"
+
+fieldConflict :: Ident -> Ident -> ErrorFun
+fieldConflict field className = typecheck $ "shadowed field " ++
+  identString field ++ " defined at " ++ classString className
 
 functionUndeclared :: Ident -> ErrorFun
 functionUndeclared ident = typecheck $ "function " ++ identString ident ++

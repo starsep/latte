@@ -4,15 +4,15 @@ import AbsLatte
 import Asm
 import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
+import Env (TypecheckOutput)
 import EmitExpr
 import EmitStmt
 import Locals
 import Optimize
 import Pure (standardFunctionsNames)
 import State
-import Typechecker (TypecheckerOutput)
 
-compiler :: Bool -> Program -> TypecheckerOutput -> String
+compiler :: Bool -> Program -> TypecheckOutput -> String
 compiler optimizeOn prog tOut =
   let locals = localsProg prog
       initEnv = (tOut, locals)

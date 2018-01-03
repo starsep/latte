@@ -1,0 +1,7 @@
+class X extends UnknownClass {
+  int x() { return 42; }
+}
+
+int main() {
+  return 0;
+}

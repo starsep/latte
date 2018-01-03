@@ -1,0 +1,15 @@
+class X extends Y {
+  void x() {}
+}
+
+class Y extends Z {
+  void y() {}
+}
+
+class Z extends X {
+  void z() {}
+}
+    
+int main() {
+  return 0;
+}

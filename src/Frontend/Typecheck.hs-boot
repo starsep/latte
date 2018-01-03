@@ -1,4 +1,4 @@
-module Typechecker where
+module Typecheck where
 
 import AbsLatte
 import Env

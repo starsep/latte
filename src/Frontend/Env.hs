@@ -4,14 +4,18 @@ import AbsLatte
 import Context
 import Control.Monad
 import Control.Monad.RWS (RWST, ask, get, lift, put, void)
-import Data.Map (Map)
+import Data.Map (Map, (!))
 import Errors
 
+type TypecheckOutput = TypedFnDefs
+
+type TopDefScope = (TypedFnDefs, ClassDefs, InheritanceTree)
 type TypedFnDefs = Map Ident Type
 type ClassDef = [ClassProp]
 type ClassDefs = Map Ident ClassDef
-type InheritanceTree = [(Ident, Ident)]
-type TCEnv = (TypedFnDefs, Type, ClassDefs, InheritanceTree)
+type InheritanceTree = Map Ident (Maybe Ident)
+
+type TCEnv = (TypedFnDefs, Ident, ClassDefs, InheritanceTree)
 type TCIdentState = Map Ident Type
 type TCDeclState = [Ident]
 type TCState = (TCIdentState, TCDeclState, Context)
@@ -71,15 +75,28 @@ askTyped = do
   (typed, _, _, _) <- ask
   return typed
 
+askIdent :: TCMonad Ident
+askIdent = do
+  (_, ident, _, _) <- ask
+  return ident
+
 askReturn :: TCMonad Type
 askReturn = do
-  (_, ret, _, _) <- ask
-  return ret
+  ident <- askIdent
+  typed <- askTyped
+  let (Fun t _) = typed ! ident
+  return t
 
 askClassDefs :: TCMonad ClassDefs
 askClassDefs = do
   (_, _, classDefs, _) <- ask
   return classDefs
+
+askProps :: TCMonad ClassDef
+askProps = do
+  name <- askIdent
+  classDefs <- askClassDefs
+  return $ classDefs ! name
 
 askInheritanceTree :: TCMonad InheritanceTree
 askInheritanceTree = do

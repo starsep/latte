@@ -9,7 +9,7 @@ typedef long long Int64;
 typedef void *AnyPtr;
 typedef char *String;
 
-void _gcIncr(void *ptr);
+void _gcIncr(AnyPtr ptr);
 
 void error() {
   puts("runtime error");
@@ -48,8 +48,8 @@ String readString() {
   return res;
 }
 
-void *_new(Int64 size) {
-  void *res = _calloc(size, 8);
+AnyPtr _new(Int64 size) {
+  AnyPtr res = _calloc(size, 8);
   _gcIncr(res);
   return res;
 }
@@ -64,8 +64,8 @@ Int64 *_arrayPtr(Int64 *array, Int64 index) {
   return res;
 }
 
-void *_newArray(Int64 size) {
-  void *res = _new(size + 1);
+AnyPtr _newArray(Int64 size) {
+  AnyPtr res = _new(size + 1);
   ((Int64 *)res)[0] = size;
   // TODO: remove debug
   // fprintf(stderr, "CREATING(size = %lld): %lld\n", size, (Int64)res);
@@ -91,7 +91,7 @@ String _concat(const String s1, const String s2) {
 }
 
 struct gcCounter {
-  void *ptr;
+  AnyPtr ptr;
   int count;
   struct gcCounter *next;
 };
@@ -101,7 +101,7 @@ typedef struct gcCounter gcCounter;
 static gcCounter *gcFirst = NULL;
 static gcCounter *gcLast = NULL;
 
-static gcCounter *_gcInit(void *ptr) {
+static gcCounter *_gcInit(AnyPtr ptr) {
   gcCounter *res = (gcCounter *)_malloc(sizeof(gcCounter));
   res->ptr = ptr;
   res->count = 1;
@@ -109,7 +109,7 @@ static gcCounter *_gcInit(void *ptr) {
   return res;
 }
 
-static gcCounter *_gcFind(void *ptr) {
+static gcCounter *_gcFind(AnyPtr ptr) {
   gcCounter *g = gcFirst;
   while (g != NULL) {
     if (g->ptr == ptr) {
@@ -120,7 +120,7 @@ static gcCounter *_gcFind(void *ptr) {
   return NULL;
 }
 
-void _gcIncr(void *ptr) {
+void _gcIncr(AnyPtr ptr) {
   fprintf(stderr, "GC INCR: %lld\n", (Int64)ptr);
   if (gcFirst == NULL) {
     gcFirst = gcLast = _gcInit(ptr);
@@ -135,7 +135,7 @@ void _gcIncr(void *ptr) {
   g->count++;
 }
 
-void _gcDecr(void *ptr) {
+void _gcDecr(AnyPtr ptr) {
   fprintf(stderr, "GC DECR: %lld\n", (Int64)ptr);
   if (ptr == NULL) return;
   gcCounter *g = _gcFind(ptr);

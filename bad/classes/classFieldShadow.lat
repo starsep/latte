@@ -1,0 +1,16 @@
+class X {
+  int x;
+}
+
+class Y extends X {
+  int y;
+}
+
+class Z extends Y {
+  string x;
+}
+
+
+int main() {
+  return 0;
+}

@@ -9,11 +9,11 @@ FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
 PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
-FRONTEND_SOURCES=Context Errors Print Typechecker Pure Env Assert
+FRONTEND_SOURCES=Context Errors Print Typecheck Check Functions Pure Env Assert Classes
 BACKEND_SOURCES=Compiler Asm EmitExpr EmitStmt State Optimize Label Locals GC
 SOURCES=Main $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
-			   $(BUILD)/Frontend/Typechecker.hs-boot $(BUILD)/Frontend/Print.hs-boot
+			   $(BUILD)/Frontend/Typecheck.hs-boot $(BUILD)/Frontend/Print.hs-boot
 BNFC_MODULES=AbsLatte ErrM LexLatte ParLatte PrintLatte TestLatte
 HPC_EXCLUDES=$(addprefix --exclude=,$(BNFC_MODULES))
 BNFC_SOURCES_FILES=$(addsuffix .hs,$(BNFC_MODULES))
@@ -51,6 +51,7 @@ testGood: Latte
 	$(call test_examples,good/arrays,OK)
 	$(call test_examples,good/czajka,OK)
 
+#$(call test_examples,good/gr5,OK)
 #$(call test_examples,good/struct,OK)
 #$(call test_examples,good/objects1,OK)
 #$(call test_examples,good/objects2,OK)
@@ -62,6 +63,7 @@ testBad: Latte
 	$(call test_examples,bad/semantic,ERROR)
 	$(call test_examples,bad/infinite_loop,ERROR)
 	$(call test_examples,bad/arrays,ERROR)
+	$(call test_examples,bad/classes,ERROR)
 
 TestLatte: $(BNFC_SOURCES) $(LINKED_SOURCES)
 	cd $(BUILD) && \

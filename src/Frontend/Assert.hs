@@ -1,6 +1,6 @@
 module Assert where
 
-import {-# SOURCE #-} Typechecker (typeOf)
+import {-# SOURCE #-} Typecheck (typeOf)
 
 import AbsLatte
 import Context
@@ -30,6 +30,7 @@ assertNumericExpr expr = do
 assertType :: Expr -> Type -> TCMonad ()
 assertType expr t = do
   typeof <- typeOf expr
+  return ()
   when (t /= typeof) $
     showError $ Errors.expectedExpression expr typeof t
 

@@ -7,11 +7,10 @@ import Control.Monad.RWS (RWS, ask, put, get, listen, pass)
 import Data.List
 import Data.Map ((!), Map)
 import qualified Data.Map as Map
-import Env (TypedFnDefs)
+import Env (TypecheckOutput, TypedFnDefs)
 import Locals
-import Typechecker (TypecheckerOutput)
 
-type CEnv = (TypecheckerOutput, Locals)
+type CEnv = (TypecheckOutput, Locals)
 type FName = String
 type LabelId = Int
 type StringLits = [String]
