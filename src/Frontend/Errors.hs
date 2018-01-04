@@ -36,7 +36,7 @@ classCycle :: Ident -> ErrorFun
 classCycle ident = typecheck $ classString ident ++ " is in cycle"
 
 diffTypesBinOp :: String -> Type -> Type -> ErrorFun
-diffTypesBinOp op t1 t2 = typecheck $ op ++ " on different types: " ++
+diffTypesBinOp op t1 t2 = typecheck $ op ++ " on incompatible types: " ++
   typeString t1 ++ " and " ++ typeString t2
 
 extendsUnknownClass :: Ident -> Ident -> ErrorFun
@@ -52,8 +52,8 @@ fieldAsMethod className name = typecheck $ "trying to use field " ++
   identString name ++ " of " ++ classString className ++ " as method"
 
 fieldConflict :: Ident -> Ident -> ErrorFun
-fieldConflict field className = typecheck $ "shadowed field " ++
-  identString field ++ " defined at " ++ classString className
+fieldConflict field className = typecheck $ "field " ++
+  identString field ++ " conflicts with definition at " ++ classString className
 
 functionUndeclared :: Ident -> ErrorFun
 functionUndeclared ident = typecheck $ "function " ++ identString ident ++
@@ -81,6 +81,12 @@ methodConflict method className method' = typecheck $
   "definition of method " ++ funString method ++ " conflicts with " ++
   funString method' ++ " defined at " ++ classString className
 
+methodFieldConflict :: FunHeader -> Ident -> (Type, Ident) -> ErrorFun
+methodFieldConflict method className (t, field) = typecheck $
+  "definition of method " ++ funString method ++ " conflicts with " ++
+  typeString t ++ " " ++ identString field ++ " defined at " ++
+    classString className
+
 multipleProps :: Ident -> ErrorFun
 multipleProps ident =
     typecheck $ "multiple definitions of property " ++ identString ident
@@ -92,6 +98,10 @@ multipleFnDef ident =
 multipleClass :: Ident -> ErrorFun
 multipleClass ident =
     typecheck $ "multiple definitions of " ++ classString ident
+
+newUnknownClass :: Ident -> ErrorFun
+newUnknownClass className = typecheck $
+  "trying to allocate instance of unknown " ++ classString className
 
 nullOfType :: Type -> ErrorFun
 nullOfType t = typecheck $ "null of non-class type " ++ typeString t

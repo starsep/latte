@@ -4,14 +4,13 @@ import AbsLatte
 import Context
 import Control.Monad
 import Control.Monad.RWS
+import Data.List
 import qualified Data.Map as Map
 import Data.Map ((!), Map)
 import Data.Maybe
 import Env
 import qualified Errors
 import Pure
-
-type ClassNames = [Ident]
 
 addInhTree :: InheritanceTree -> Ident -> Ident -> InheritanceTree
 addInhTree inhTree ident extends =
@@ -66,8 +65,8 @@ findCycleDfs ident = do
     findCycleDfs $ fromJust parent
 
 checkClass :: Ident -> TopDefScope -> IO ()
-checkClass name (typed, classDefs, inhTree) = do
-  let initEnv = (typed, name, classDefs, inhTree)
+checkClass name (typed, classDefs, inhTree, classNames) = do
+  let initEnv = (typed, name, classDefs, inhTree, classNames)
       initState = (Map.empty, [], Context [CClass name])
   void $ runRWST checkClassM initEnv initState
 
@@ -102,8 +101,7 @@ checkFieldShadow field c = do
     checkFieldShadow field to
 
 isFieldConflict :: Ident -> ClassProp -> Bool
-isFieldConflict f (Field _ f2) = f == f2
-isFieldConflict f _ = False
+isFieldConflict f prop = f == propName prop
 
 checkMethod :: Type -> Ident -> [Arg] -> Block -> TCMonad ()
 checkMethod out name args body = do
@@ -117,9 +115,11 @@ checkVirtualMethod className method = do
   name <- askIdent
   when (name /= className) $ do
     let methodConfs = filter (isMethodConflict method) (classDefs ! className)
-    unless (null methodConfs) $ do
-      let (Method out' name' args' _) = head methodConfs
-      showError $ Errors.methodConflict method className (out', name', args')
+    unless (null methodConfs) $ case head methodConfs of
+      Method out' name' args' _ ->
+        showError $ Errors.methodConflict method className (out', name', args')
+      Field t name' ->
+        showError $ Errors.methodFieldConflict method className (t, name')
   when (isJust parent) $ do
     let to = fromJust parent
     checkVirtualMethod to method
@@ -129,7 +129,7 @@ isMethodConflict (out, name, args) (Method out' name' args' _) =
   let typeOfArg (Arg t _) = t
       types = map typeOfArg in
   name == name' && (out /= out' || types args /= types args')
-isMethodConflict _ _ = False
+isMethodConflict (_, name, _) (Field _ fieldName) = name == fieldName
 
 checkProp :: ClassProp -> TCMonad ()
 checkProp (Method out name args body) = checkMethod out name args body
@@ -139,3 +139,132 @@ classParent :: Ident -> TCMonad (Maybe Ident)
 classParent className = do
   inhTree <- askInheritanceTree
   return $ inhTree ! className
+
+isCompatibleType :: Type -> Type -> TCMonad Bool
+isCompatibleType (Array visible) (Array actual) =
+  isCompatibleType visible actual
+isCompatibleType t@(ClassType visible) (ClassType actual) = do
+  parent <- classParent actual
+  let equal = visible == actual
+      subType = isJust parent
+  if subType then do
+    compRec <- isCompatibleType t (ClassType $ fromJust parent)
+    return $ equal || compRec
+  else
+    return equal
+isCompatibleType visible actual = return $ visible == actual
+
+findProp' :: Ident -> Ident -> Ident -> TCMonad ClassProp
+findProp' topClass className name = do
+  classDefs <- askClassDefs
+  let classDef = classDefs ! className
+      props = filter (\p -> propName p == name) classDef
+  if not . null $ props then
+    return $ head props
+  else do
+    parent <- classParent className
+    when (isNothing parent) $
+      showError $ Errors.unknownProperty topClass name
+    findProp' topClass (fromJust parent) name
+
+findProp :: Ident -> Ident -> TCMonad ClassProp
+findProp className = findProp' className className
+
+type CDEnv = (ClassDefs, InheritanceTree, ClassNames)
+type CDState = ClassesData
+type CDMonad = RWS CDEnv () CDState
+
+runBuildClassesData :: CDEnv -> IO ClassesData
+runBuildClassesData initEnv = do
+  let (_, classesData, _) = runRWS buildClassesData initEnv Map.empty
+  return classesData
+
+buildClassesData :: CDMonad ()
+buildClassesData = do
+  classNames <- cdAskClassNames
+  forM_ classNames
+    buildClassData
+
+getParentClassData :: Ident -> CDMonad ClassData
+getParentClassData className = do
+  parent <- cdParent className
+  case parent of
+    Just par -> do
+      buildClassData par
+      getClassData par
+    Nothing -> return ([], [])
+
+buildClassData :: Ident -> CDMonad ()
+buildClassData className = do
+  classesData <- getClassesData
+  unless (Map.member className classesData) $
+    buildClassDataImpl className
+
+isMethod :: ClassProp -> Bool
+isMethod prop = case prop of
+  Method{} -> True
+  Field{} -> False
+
+buildClassDataImpl :: Ident -> CDMonad ()
+buildClassDataImpl className = do
+  (parentMethods, parentFields) <- getParentClassData className
+  classDefs <- cdAskClassDefs
+  let classDef = classDefs ! className
+      (methods, fields) = partition isMethod classDef
+      newMethods = foldl (addMethod className) parentMethods methods
+      newFields = foldl addField parentFields fields
+  classesData <- getClassesData
+  put $ Map.insert className (newMethods, newFields) classesData
+
+replaceMethod :: Ident -> Ident -> (Bool, [ClassMethod]) ->
+  ClassMethod -> (Bool, [ClassMethod])
+replaceMethod className name (r, methods) m@(ClassMethod i name' className') =
+  if name == name' then
+    (True, ClassMethod i name className : methods)
+  else
+    (r, m : methods)
+
+addMethod :: Ident -> [ClassMethod] -> ClassProp -> [ClassMethod]
+addMethod className [] (Method _ name _ _) = [ClassMethod 0 name className]
+addMethod className methods@(ClassMethod i _ _ : _) (Method _ name _ _) =
+  let replaceFun = replaceMethod className name
+      (replaced, methods') = foldl replaceFun (False, []) methods in
+  if replaced then
+    methods'
+  else
+    ClassMethod (i + 1) name className : methods
+addMethod _ methods Field{} = methods
+
+addField :: [ClassField] -> ClassProp -> [ClassField]
+addField [] (Field _ name) = [ClassField 0 name]
+addField fields@(ClassField i _ : _) (Field _ name) =
+  ClassField (i + 1) name : fields
+addField fields Method{} = fields
+
+cdAskClassDefs :: CDMonad ClassDefs
+cdAskClassDefs = do
+  (classDefs, _, _) <- ask
+  return classDefs
+
+cdAskInheritanceTree :: CDMonad InheritanceTree
+cdAskInheritanceTree = do
+  (_, inhTree, _) <- ask
+  return inhTree
+
+cdAskClassNames :: CDMonad ClassNames
+cdAskClassNames = do
+  (_, _, classNames) <- ask
+  return classNames
+
+getClassesData :: CDMonad ClassesData
+getClassesData = get
+
+getClassData :: Ident -> CDMonad ClassData
+getClassData className = do
+  classesData <- getClassesData
+  return $ classesData ! className
+
+cdParent :: Ident -> CDMonad (Maybe Ident)
+cdParent className = do
+    inhTree <- cdAskInheritanceTree
+    return $ inhTree ! className

@@ -1,0 +1,4 @@
+int main() {
+  new Unknown;
+  return 0;
+}

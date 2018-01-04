@@ -7,7 +7,7 @@ import Control.Monad.RWS (RWS, ask, put, get, listen, pass)
 import Data.List
 import Data.Map ((!), Map)
 import qualified Data.Map as Map
-import Env (TypecheckOutput, TypedFnDefs)
+import Env (TypecheckOutput, TypedFnDefs, ClassesData)
 import Locals
 
 type CEnv = (TypecheckOutput, Locals)
@@ -83,8 +83,13 @@ emptyVars = putVars initVars
 
 askTypedFns :: CMonad TypedFnDefs
 askTypedFns = do
-  (typed, _) <- ask
+  ((typed, _), _) <- ask
   return typed
+
+askClassesData :: CMonad ClassesData
+askClassesData = do
+  ((_, classesData), _) <- ask
+  return classesData
 
 askLocals :: CMonad Locals
 askLocals = do

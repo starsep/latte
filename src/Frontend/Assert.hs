@@ -3,6 +3,7 @@ module Assert where
 import {-# SOURCE #-} Typecheck (typeOf)
 
 import AbsLatte
+import Classes
 import Context
 import Control.Monad
 import Data.Map ((!))
@@ -30,8 +31,8 @@ assertNumericExpr expr = do
 assertType :: Expr -> Type -> TCMonad ()
 assertType expr t = do
   typeof <- typeOf expr
-  return ()
-  when (t /= typeof) $
+  compatible <- isCompatibleType t typeof
+  unless compatible $
     showError $ Errors.expectedExpression expr typeof t
 
 assertVarDeclared :: Ident -> TCMonad ()
@@ -55,7 +56,5 @@ assertBExpr bExpr = do
 
 assertArrayableType :: Type -> TCMonad ()
 assertArrayableType t =
-  unless (isSimpleType t) $
-  case t of
-    Array t' -> assertArrayableType t'
-    _ -> showError $ Errors.arrayOfBadType t
+  when (t == Void) $
+  showError $ Errors.arrayOfBadType t

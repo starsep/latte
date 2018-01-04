@@ -2,8 +2,10 @@ module Typecheck (typeOf, typecheckBlock) where
 
 import AbsLatte
 import Assert
+import Classes
 import Context
 import Control.Monad
+import Control.Monad.Loops
 import Control.Monad.RWS (get, put)
 import qualified Data.Map as Map
 import Data.Int
@@ -72,7 +74,11 @@ typeOf q =
       unless (isClass t) $
         showError $ Errors.nullOfType t
       return t
-    EClass t -> return t
+    EClass t -> do
+      classNames <- askClassNames
+      unless (t `elem` classNames) $
+        showError $ Errors.newUnknownClass t
+      return $ ClassType t
     EMethod object name args -> do
       t <- typeOf object
       case t of
@@ -84,15 +90,6 @@ typeOf q =
               return t'
             _ -> showErrorV $ Errors.fieldAsMethod className name
         _ -> showErrorV $ Errors.methodCallOn object t name args
-
-findProp :: Ident -> Ident -> TCMonad ClassProp
-findProp className name = do
-  classDefs <- askClassDefs
-  let classDef = classDefs ! className
-      props = filter (\p -> propName p == name) classDef
-  when (null props) $
-    showError $ Errors.unknownProperty className name
-  return $ head props
 
 typeOfArray :: Expr -> TCMonad Type
 typeOfArray expr = do
@@ -117,7 +114,11 @@ checkBinOp :: Expr -> Expr -> String -> TCMonad Type
 checkBinOp expr1 expr2 name = do
   t1 <- typeOf expr1
   t2 <- typeOf expr2
-  unless (t1 == t2) $ showError $ Errors.diffTypesBinOp name t1 t2
+  compatible1 <- isCompatibleType t1 t2
+  compatible2 <- isCompatibleType t2 t1
+  let compatible = compatible1 || compatible2
+  unless compatible $
+    showError $ Errors.diffTypesBinOp name t1 t2
   return t1
 
 checkNeg :: Expr -> TCMonad Type
@@ -149,7 +150,10 @@ checkArgs ident args types = do
   when (nArgs /= expected) $
     showError $ Errors.numberOfArgs ident nArgs expected
   argsTypes <- mapM typeOf args
-  when (argsTypes /= types) $
+  let zipped = zip types argsTypes
+  let compatibleZipped (t1, t2) = isCompatibleType t1 t2
+  compatible <- allM compatibleZipped zipped
+  unless compatible $
     showError $ Errors.typesOfArgs ident argsTypes types
 
 outputTypeFun :: Ident -> [Expr] -> TCMonad Type
@@ -200,8 +204,9 @@ typecheckAss lvalue expr = do
   rtype <- typeOf expr
   case lvalue of
     EVar _ -> assertType expr ltype
-    ESubs _ ->
-      when (ltype /= rtype) $
+    ESubs _ -> do
+      compatible <- isCompatibleType ltype rtype
+      unless compatible $
         showError $ Errors.notMatchingTypeIndex ltype rtype
     EField object name -> do
       t <- typeOf object
@@ -230,7 +235,8 @@ typecheckStmtCase stmt = do
       t <- typeOf expr
       when (returnType == Void) $
         showError $ Errors.retVoid expr t
-      when (returnType /= t) $
+      compatibleTypes <- isCompatibleType returnType t
+      unless compatibleTypes $
         showError $ Errors.badRetType expr t returnType
     VRet -> when (returnType /= Void) $
       showError $ Errors.vRetNoVoid returnType
@@ -256,7 +262,8 @@ typecheckStmtCase stmt = do
     For t ident array stmt' -> do
       addContext $ CFor t ident array
       arrayType <- typeOf array
-      when (arrayType /= Array t) $
+      compatible <- isCompatibleType (Array t) arrayType
+      unless compatible $
         showError $ Errors.badArrayType array arrayType t
       typecheckBlock $ Block [Decl t [NoInit ident], stmt']
       dropContext

@@ -7,15 +7,22 @@ import Control.Monad.RWS (RWST, ask, get, lift, put, void)
 import Data.Map (Map, (!))
 import Errors
 
-type TypecheckOutput = TypedFnDefs
+type TypecheckOutput = (TypedFnDefs, ClassesData)
 
-type TopDefScope = (TypedFnDefs, ClassDefs, InheritanceTree)
+data ClassField = ClassField Int Ident deriving (Show)
+data ClassMethod = ClassMethod Int Ident Ident deriving (Show)
+type ClassData = ([ClassMethod], [ClassField])
+type ClassesData = Map Ident ClassData
+
+type TopDefScope = (TypedFnDefs, ClassDefs, InheritanceTree, ClassNames)
 type TypedFnDefs = Map Ident Type
 type ClassDef = [ClassProp]
 type ClassDefs = Map Ident ClassDef
+type ClassNames = [Ident]
+
 type InheritanceTree = Map Ident (Maybe Ident)
 
-type TCEnv = (TypedFnDefs, Ident, ClassDefs, InheritanceTree)
+type TCEnv = (TypedFnDefs, Ident, ClassDefs, InheritanceTree, ClassNames)
 type TCIdentState = Map Ident Type
 type TCDeclState = [Ident]
 type TCState = (TCIdentState, TCDeclState, Context)
@@ -72,12 +79,12 @@ putContext newContext = do
 
 askTyped :: TCMonad TypedFnDefs
 askTyped = do
-  (typed, _, _, _) <- ask
+  (typed, _, _, _, _) <- ask
   return typed
 
 askIdent :: TCMonad Ident
 askIdent = do
-  (_, ident, _, _) <- ask
+  (_, ident, _, _, _) <- ask
   return ident
 
 askReturn :: TCMonad Type
@@ -89,7 +96,7 @@ askReturn = do
 
 askClassDefs :: TCMonad ClassDefs
 askClassDefs = do
-  (_, _, classDefs, _) <- ask
+  (_, _, classDefs, _, _) <- ask
   return classDefs
 
 askProps :: TCMonad ClassDef
@@ -100,8 +107,13 @@ askProps = do
 
 askInheritanceTree :: TCMonad InheritanceTree
 askInheritanceTree = do
-  (_, _, _, inheritanceTree) <- ask
+  (_, _, _, inheritanceTree, _) <- ask
   return inheritanceTree
+
+askClassNames :: TCMonad ClassNames
+askClassNames = do
+  (_, _, _, _, classNames) <- ask
+  return classNames
 
 addContext :: ContextItem -> TCMonad ()
 addContext contextItem = do
@@ -117,4 +129,5 @@ addContextStmt contextItem = do
 dropContext :: TCMonad ()
 dropContext = do
   (Context context) <- getContext
-  void $ putContext $ Context $ tail context
+  unless (null context) $
+    void $ putContext $ Context $ tail context

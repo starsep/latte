@@ -1,0 +1,15 @@
+class A {
+  int x() { return 42; }
+}
+
+class B extends A {
+  int b;
+}
+
+class C extends B {
+  string x;
+}
+
+int main() {
+  return 0;
+}

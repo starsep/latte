@@ -43,7 +43,15 @@ emitTopDef (FnDef _ (Ident name) args block) = do
   emitBlock block
   funFooter
 
-emitTopDef _ = return () -- TODO: classes
+emitTopDef (ClassDef className props) =
+  forM_ props $ \prop -> case prop of
+    Field{} -> return ()
+    Method _ name args block -> emitMethod className name args block
+emitTopDef (ClassDefE name _ props) = emitTopDef (ClassDef name props)
+
+emitMethod :: Ident -> Ident -> [Arg] -> Block -> CMonad ()
+emitMethod className name args block = do
+  error "emitMethod isn't implemented"
 
 argDecl :: Arg -> Stmt
 argDecl (Arg t ident) = Decl t [NoInit ident]

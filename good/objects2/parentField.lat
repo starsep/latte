@@ -1,0 +1,14 @@
+class X {
+  int x;
+}
+
+class Y extends X {
+  int y;
+}
+
+int main() {
+  Y v = new Y;
+  v.x = 42;
+  printInt(v.x);
+  return 0;
+}

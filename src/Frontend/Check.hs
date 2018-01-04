@@ -17,9 +17,10 @@ check (Program topDefs) = do
       initClassDefs = (Map.empty, initInhTree)
   (classDefs, inhTree) <- foldM (addClassDef classNames) initClassDefs topDefs
   runFindCycle classNames inhTree
+  classesData <- runBuildClassesData (classDefs, inhTree, classNames)
   assertCorrectMain typedFns
-  forM_ topDefs (`checkTopDef` (typedFns, classDefs, inhTree))
-  return typedFns
+  forM_ topDefs (`checkTopDef` (typedFns, classDefs, inhTree, classNames))
+  return (typedFns, classesData)
 
 checkTopDef :: TopDef -> TopDefScope -> IO ()
 checkTopDef topDef scope = case topDef of

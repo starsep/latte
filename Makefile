@@ -25,21 +25,31 @@ all: $(BINARIES)
 
 test: testGood testBad
 
+define compile_example
+	e=$1; \
+	echo -e "\e[93m----------- TESTING\e[96m $$e \e[93m--------------\e[0m"; \
+	./latc "$$e" 2>&1 | tee "${BUILD}"/output
+endef
+
+define test_example
+	e=$1; \
+	$(call compile_example,$$e); \
+	[ "x$$(head -n 1 "${BUILD}"/output)" = "x$2" ] || exit 1;  \
+	if [ "xOK" = "x$2" ]; then \
+		INPUT=/dev/null; \
+		if [ -e $${e%.lat}.input ]; then \
+		INPUT=$${e%.lat}.input; \
+		fi; \
+		valgrind ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output 2> "${BUILD}"/val; \
+		grep "definitely lost\|still reachable" "${BUILD}"/val; \
+		cmp $${e%.lat}.output "${BUILD}"/output &> /dev/null || \
+		git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output; \
+	fi
+endef
+
 define test_examples
 	@for e in $1/*.lat ; do \
-		echo -e "\e[93m----------- TESTING\e[96m $$e \e[93m--------------\e[0m"; \
-		./latc "$$e" 2>&1 | tee "${BUILD}"/output ; \
-		[ "x$$(head -n 1 "${BUILD}"/output)" = "x$2" ] || exit 1;  \
-		if [ "xOK" = "x$2" ]; then \
-		  INPUT=/dev/null; \
-		  if [ -e $${e%.lat}.input ]; then \
-			INPUT=$${e%.lat}.input; \
-		  fi; \
-		  valgrind ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output 2> "${BUILD}"/val; \
-		  grep "definitely lost\|still reachable" "${BUILD}"/val; \
-		  cmp $${e%.lat}.output "${BUILD}"/output &> /dev/null || \
-		  git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output; \
-		fi; \
+		$(call test_example,$$e,$2); \
 	done
 endef
 
@@ -51,11 +61,11 @@ testGood: Latte
 	$(call test_examples,good/arrays,OK)
 	$(call test_examples,good/czajka,OK)
 
-#$(call test_examples,good/gr5,OK)
 #$(call test_examples,good/struct,OK)
 #$(call test_examples,good/objects1,OK)
 #$(call test_examples,good/objects2,OK)
 #$(call test_examples,good/virtual,OK)
+#$(call test_examples,good/gr5,OK)
 #$(call test_examples,good/hardcore,OK)
 
 testBad: Latte
