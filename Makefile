@@ -85,7 +85,7 @@ Latte: .dependencies $(BNFC_SOURCES) $(LINKED_SOURCES) lib/runtime.o
 
 .dependencies:
 	cabal update && \
-	cabal install mtl==2.2.1 extra==1.5 Unique==0.4.7.1 && \
+	cabal install mtl==2.2.1 extra==1.5 Unique==0.4.7.1 monad-loops-0.4.3 && \
 	touch .dependencies
 
 travis: shellcheck test
