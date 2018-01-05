@@ -114,10 +114,12 @@ instance Show AsmStmt where
 
 data DataSize
   = DataByte
+  | DataQword
   deriving (Eq)
 
 instance Show DataSize where
   show DataByte = "db"
+  show DataQword = "dq"
 
 preserveRegisters :: Registers
 preserveRegisters =

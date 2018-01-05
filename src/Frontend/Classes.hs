@@ -230,7 +230,7 @@ addMethod className methods@(ClassMethod i _ _ : _) (Method _ name _ _) =
   let replaceFun = replaceMethod className name
       (replaced, methods') = foldl replaceFun (False, []) methods in
   if replaced then
-    methods'
+    reverse methods'
   else
     ClassMethod (i + 1) name className : methods
 addMethod _ methods Field{} = methods

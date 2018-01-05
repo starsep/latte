@@ -1,5 +1,6 @@
 module Label where
 
+import AbsLatte
 import Asm
 import State
 import Control.Monad.RWS (tell)
@@ -50,3 +51,10 @@ whileLabels = do
   (fname, labelId, labelId') <- twoLabels
   return (fname ++ "$whileBegin#" ++ show labelId,
     fname ++ "$whileAfter#" ++ show labelId')
+
+classMethodLabel :: Ident -> Ident -> String
+classMethodLabel (Ident className) (Ident method) =
+  method ++ "@" ++ className
+
+vtableLabel :: Ident -> String
+vtableLabel (Ident className) = "vtable~" ++ className

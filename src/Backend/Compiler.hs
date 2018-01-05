@@ -5,6 +5,7 @@ import Asm
 import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
 import Env (TypecheckOutput)
+import EmitClass
 import EmitExpr
 import EmitStmt
 import Locals
@@ -28,6 +29,8 @@ compile prog = do
 
 emitProgram :: Program -> CMonad ()
 emitProgram (Program topdefs) = do
+  emitVTables
+  tell [SectionText]
   forM_ topdefs emitTopDef
   literals <- getStrings
   unless (null literals) $ do
@@ -43,15 +46,11 @@ emitTopDef (FnDef _ (Ident name) args block) = do
   emitBlock block
   funFooter
 
-emitTopDef (ClassDef className props) =
+emitTopDef (ClassDef className props) = do
   forM_ props $ \prop -> case prop of
     Field{} -> return ()
     Method _ name args block -> emitMethod className name args block
 emitTopDef (ClassDefE name _ props) = emitTopDef (ClassDef name props)
-
-emitMethod :: Ident -> Ident -> [Arg] -> Block -> CMonad ()
-emitMethod className name args block = do
-  error "emitMethod isn't implemented"
 
 argDecl :: Arg -> Stmt
 argDecl (Arg t ident) = Decl t [NoInit ident]
@@ -93,7 +92,6 @@ emitHeader :: CMonad ()
 emitHeader = do
   tell [Global "main", EmptyLine]
   tell $ map Extern standardFunctionsNames
-  tell [SectionText]
 
 funHeader :: CMonad ()
 funHeader = do

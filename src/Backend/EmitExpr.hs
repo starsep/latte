@@ -54,14 +54,14 @@ emitExpr q = case q of
   ESubs subs -> dereference $ LSubs subs
   EVar ident -> dereference $ LVar ident
   EMethod lv ident args -> do
-    error "class method invoking isn't implemeted" -- TODO
+    -- error "class method invoking isn't implemeted" -- TODO
     return Int -- TODO
   EField lv ident -> do
     t <- localRWS $ emitExpr lv
     case t of
       Array _ -> emitEApp (Ident "_arrayLength") [lv]
       _ -> do
-        error "classField access isn't implemented" -- TODO
+        -- error "classField access isn't implemented" -- TODO
         return Int -- TODO
   ELitInt number -> do
     tell [Push $ show number]
@@ -77,7 +77,7 @@ emitExpr q = case q of
     _ <- emitEApp (Ident "_newArray") [num]
     return $ Array t
   EClass className -> do
-    error "class allocation isn't implemented" -- TODO
+    -- error "class allocation isn't implemented" -- TODO
     classesData <- askClassesData
     let (_, fields) = classesData ! className
         size = toInteger $ length fields + 1
