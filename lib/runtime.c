@@ -43,7 +43,10 @@ String readString() {
   String res = NULL;
   size_t n = 0;
   getline(&res, &n, stdin);
-  res[strlen(res) - 1] = '\0';  // remove trailing \n
+  size_t len = strlen(res);
+  if (len > 0 && res[len - 1] == '\n') {
+    res[len - 1] = '\0';
+  }
   _gcIncr(res);
   return res;
 }
