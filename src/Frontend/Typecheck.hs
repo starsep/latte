@@ -213,7 +213,12 @@ typecheckAss lvalue expr = do
       case t of
         Array _ -> when (name == Ident "length") $
           showError Errors.lengthReadOnly
-        _ -> return ()
+        ClassType className -> do
+          fieldT <- typeOf $ EField object name
+          compatible <- isCompatibleType fieldT rtype
+          unless compatible $
+            showError $ Errors.badFieldType className name fieldT expr rtype
+        _ -> showError $ Errors.badLvalue lvalue ltype
     _ -> showError $ Errors.badLvalue lvalue ltype
 
 checkRelOp :: Expr -> Expr -> String -> TCMonad ()

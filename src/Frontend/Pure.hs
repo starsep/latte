@@ -86,13 +86,14 @@ standardFunctions =
     -- INTERNAL FUNCTIONS:
     (Ident "_arrayLength", Fun Int [Str]),
     (Ident "_arrayPtr", Fun Str [Str, Int]),
+    (Ident "_classField", Fun Str [Str, Int]),
     (Ident "_copyStr", Fun Str [Str]),
     (Ident "_concat", Fun Str [Str, Str]),
     (Ident "_gcClean", Fun Void []),
     (Ident "_gcDecr", Fun Void [Str]),
     (Ident "_gcIncr", Fun Void [Str]),
-    (Ident "_new", Fun Str [Int]),
-    (Ident "_newArray", Fun Str [Int])
+    (Ident "_newArray", Fun Str [Int]),
+    (Ident "_newClass", Fun Str [Int, Str])
   ]
 
 standardFunctionsNames :: [String]

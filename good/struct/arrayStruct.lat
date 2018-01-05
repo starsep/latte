@@ -1,0 +1,12 @@
+class Arr {
+    int[] t;
+}
+
+int main() {
+    Arr[] t = new Arr[2];
+    t[1] = new Arr;
+    t[1].t = new int[3];
+    t[1].t[2] = 42;
+    printInt(t[1].t[2]);
+    return 0;
+}

@@ -236,9 +236,9 @@ addMethod className methods@(ClassMethod i _ _ : _) (Method _ name _ _) =
 addMethod _ methods Field{} = methods
 
 addField :: [ClassField] -> ClassProp -> [ClassField]
-addField [] (Field _ name) = [ClassField 0 name]
-addField fields@(ClassField i _ : _) (Field _ name) =
-  ClassField (i + 1) name : fields
+addField [] (Field t name) = [ClassField 0 name t]
+addField fields@(ClassField i _ _ : _) (Field t name) =
+  ClassField (i + 1) name t : fields
 addField fields Method{} = fields
 
 cdAskClassDefs :: CDMonad ClassDefs

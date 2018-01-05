@@ -32,6 +32,12 @@ badRetType :: Expr -> Type -> Type -> ErrorFun
 badRetType e t rt = typecheck $ "returning " ++ exprString e ++
   typeOfString t ++ "in function returning " ++ typeString rt
 
+badFieldType :: Ident -> Ident -> Type -> Expr -> Type -> ErrorFun
+badFieldType className field fieldT e t =
+  typecheck $ "trying to assign " ++ exprOfTypeString e t ++ "to field " ++
+  typeString fieldT ++ " " ++ identString field ++ " defined in " ++
+  classString className
+
 classCycle :: Ident -> ErrorFun
 classCycle ident = typecheck $ classString ident ++ " is in cycle"
 

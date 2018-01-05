@@ -13,6 +13,7 @@ FRONTEND_SOURCES=Assert Check Classes Context Env Errors Functions Print Pure Ty
 BACKEND_SOURCES=Asm Compiler EmitClass EmitExpr EmitStmt GC Label Locals Optimize State
 SOURCES=Main $(addprefix Backend/,$(BACKEND_SOURCES)) $(addprefix Frontend/,$(FRONTEND_SOURCES))
 LINKED_SOURCES=$(addsuffix .hs,$(addprefix $(BUILD)/,$(SOURCES))) \
+			   $(BUILD)/Backend/EmitClass.hs-boot \
 			   $(BUILD)/Frontend/Typecheck.hs-boot $(BUILD)/Frontend/Print.hs-boot
 BNFC_MODULES=AbsLatte ErrM LexLatte ParLatte PrintLatte TestLatte
 HPC_EXCLUDES=$(addprefix --exclude=,$(BNFC_MODULES))
@@ -59,9 +60,9 @@ testGood: Latte
 	$(call test_examples,good/basic,OK)
 	$(call test_examples,good/input,OK)
 	$(call test_examples,good/arrays,OK)
+	$(call test_examples,good/struct,OK)
 	$(call test_examples,good/czajka,OK)
 
-#$(call test_examples,good/struct,OK)
 #$(call test_examples,good/objects1,OK)
 #$(call test_examples,good/objects2,OK)
 #$(call test_examples,good/virtual,OK)

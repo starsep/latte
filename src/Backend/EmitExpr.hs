@@ -6,6 +6,7 @@ import Control.Monad
 import Control.Monad.RWS (tell)
 import Data.Map ((!))
 import qualified Data.Map as Map
+import {-# SOURCE #-} EmitClass
 import Label
 import State
 
@@ -53,16 +54,12 @@ emitExpr q = case q of
     return t
   ESubs subs -> dereference $ LSubs subs
   EVar ident -> dereference $ LVar ident
-  EMethod lv ident args -> do
-    -- error "class method invoking isn't implemeted" -- TODO
-    return Int -- TODO
+  EMethod lv ident args -> emitMethodInvoke lv ident args
   EField lv ident -> do
     t <- localRWS $ emitExpr lv
     case t of
       Array _ -> emitEApp (Ident "_arrayLength") [lv]
-      _ -> do
-        -- error "classField access isn't implemented" -- TODO
-        return Int -- TODO
+      _ -> emitField lv ident
   ELitInt number -> do
     tell [Push $ show number]
     return Int
@@ -76,13 +73,7 @@ emitExpr q = case q of
   EArray t num -> do
     _ <- emitEApp (Ident "_newArray") [num]
     return $ Array t
-  EClass className -> do
-    -- error "class allocation isn't implemented" -- TODO
-    classesData <- askClassesData
-    let (_, fields) = classesData ! className
-        size = toInteger $ length fields + 1
-    _ <- emitEApp (Ident "_new") [ELitInt size]
-    return $ ClassType className
+  EClass className -> emitNewClass className
   EString s -> do
     label <- stringLiteralLabel s
     localReserveReg resultReg $
@@ -214,3 +205,4 @@ emitLValue q = case q of
     dereferenceTop
     callArrayPtr index
     return t
+  LField obj name -> emitLField obj name

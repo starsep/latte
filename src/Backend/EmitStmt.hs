@@ -115,6 +115,7 @@ exprToLValue :: Expr -> LValue
 exprToLValue q = case q of
   EVar ident -> LVar ident
   ESubs subs -> LSubs subs
+  EField obj name -> LField obj name
   _ -> error $ "converting " ++ show q ++ " to lvalue isn't implemented"
 
 emitAss :: Expr -> Expr -> CMonad ()

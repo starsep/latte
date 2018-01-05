@@ -22,6 +22,7 @@ type CMonad = RWS CEnv AsmStmts CState
 data LValue
   = LVar Ident
   | LSubs ESubs
+  | LField Expr Ident
 
 putName :: String -> CMonad ()
 putName name = do

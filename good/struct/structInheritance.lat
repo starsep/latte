@@ -1,0 +1,30 @@
+class X {
+  int x;
+}
+
+class Y extends X {
+  int y;
+}
+
+class Z extends Y {
+  string z;
+}
+
+int main() {
+  Z z = new Z;
+  z.x = 42;
+  z.y = 5;
+  z.z = "hello";
+
+  printInt(z.x);
+  printInt(z.y);
+  printString(z.z);
+
+  Y y = z;
+  printInt(y.x);
+  printInt(y.y);
+
+  X x = z;
+  printInt(x.x);
+  return 0;
+}

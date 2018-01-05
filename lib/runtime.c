@@ -6,10 +6,10 @@
 #define fprintf if(DEBUG)fprintf
 
 typedef long long Int64;
-typedef void *AnyPtr;
+typedef void *Ptr;
 typedef char *String;
 
-void _gcIncr(AnyPtr ptr);
+void _gcIncr(Ptr ptr);
 
 void error() {
   puts("runtime error");
@@ -20,16 +20,16 @@ void printInt(Int64 x) { printf("%lld\n", x); }
 
 void printString(String s) { puts(s); }
 
-void _free(AnyPtr ptr) {
+void _free(Ptr ptr) {
   fprintf(stderr, "FREEING %lld\n", (Int64)ptr);
   free(ptr);
 }
 
-AnyPtr *_malloc(Int64 size) {
+Ptr *_malloc(Int64 size) {
   return malloc(size);
 }
 
-AnyPtr *_calloc(Int64 num, Int64 size) {
+Ptr *_calloc(Int64 num, Int64 size) {
   return calloc(num, size);
 }
 
@@ -48,29 +48,43 @@ String readString() {
   return res;
 }
 
-AnyPtr _new(Int64 size) {
-  AnyPtr res = _calloc(size, 8);
+static Ptr _new(Int64 size) {
+  Ptr res = _calloc(size, 8);
   _gcIncr(res);
   return res;
 }
+
+Ptr _newClass(Int64 size, Ptr vtable) {
+  Ptr res = _new(size + 1);
+  fprintf(stderr, "NEW CLASS %lld %lld\n", size, (Int64)vtable);
+  ((Ptr*)res)[0] = vtable;
+  return res;
+}
+
 
 Int64 _arrayLength(Int64 *array) { return array[0]; }
 
 Int64 *_arrayPtr(Int64 *array, Int64 index) {
   Int64 *res = array + index + 1;
   // TODO: remove debug
-  // fprintf(stderr, "PTR of %lld with index %lld is %lld\n", (Int64)array, index, (long
-  // long)res);
+  fprintf(stderr, "ARRAY PTR of %lld with index %lld is %lld\n", (Int64)array, index, (long long)res);
   return res;
 }
 
-AnyPtr _newArray(Int64 size) {
-  AnyPtr res = _new(size + 1);
+Ptr _newArray(Int64 size) {
+  Ptr res = _new(size + 1);
   ((Int64 *)res)[0] = size;
   // TODO: remove debug
   // fprintf(stderr, "CREATING(size = %lld): %lld\n", size, (Int64)res);
   return res;
 }
+
+Ptr _classField(Ptr obj, Int64 n) {
+  Ptr res = ((Int64*)obj) + n + 1; 
+  fprintf(stderr, "CLASS FIELD %lld, n %lld = %lld\n", (Int64)obj, n, (Int64)res);
+  return res;
+}
+
 
 String _copyStr(const String s) {
   int len = strlen(s) + 1;
@@ -91,7 +105,7 @@ String _concat(const String s1, const String s2) {
 }
 
 struct gcCounter {
-  AnyPtr ptr;
+  Ptr ptr;
   int count;
   struct gcCounter *next;
 };
@@ -101,7 +115,7 @@ typedef struct gcCounter gcCounter;
 static gcCounter *gcFirst = NULL;
 static gcCounter *gcLast = NULL;
 
-static gcCounter *_gcInit(AnyPtr ptr) {
+static gcCounter *_gcInit(Ptr ptr) {
   gcCounter *res = (gcCounter *)_malloc(sizeof(gcCounter));
   res->ptr = ptr;
   res->count = 1;
@@ -109,7 +123,7 @@ static gcCounter *_gcInit(AnyPtr ptr) {
   return res;
 }
 
-static gcCounter *_gcFind(AnyPtr ptr) {
+static gcCounter *_gcFind(Ptr ptr) {
   gcCounter *g = gcFirst;
   while (g != NULL) {
     if (g->ptr == ptr) {
@@ -120,7 +134,7 @@ static gcCounter *_gcFind(AnyPtr ptr) {
   return NULL;
 }
 
-void _gcIncr(AnyPtr ptr) {
+void _gcIncr(Ptr ptr) {
   fprintf(stderr, "GC INCR: %lld\n", (Int64)ptr);
   if (gcFirst == NULL) {
     gcFirst = gcLast = _gcInit(ptr);
@@ -135,7 +149,7 @@ void _gcIncr(AnyPtr ptr) {
   g->count++;
 }
 
-void _gcDecr(AnyPtr ptr) {
+void _gcDecr(Ptr ptr) {
   fprintf(stderr, "GC DECR: %lld\n", (Int64)ptr);
   if (ptr == NULL) return;
   gcCounter *g = _gcFind(ptr);

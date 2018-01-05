@@ -9,7 +9,7 @@ import Errors
 
 type TypecheckOutput = (TypedFnDefs, ClassesData)
 
-data ClassField = ClassField Int Ident deriving (Show)
+data ClassField = ClassField Int Ident Type deriving (Show)
 data ClassMethod = ClassMethod Int Ident Ident deriving (Show)
 type ClassData = ([ClassMethod], [ClassField])
 type ClassesData = Map Ident ClassData

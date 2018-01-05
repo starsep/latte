@@ -1,0 +1,23 @@
+class X {
+  int x;
+  string y;
+  int z;
+  X r;
+}
+
+int main() {
+  X v = new X;
+  v.x = 42;
+  v.y = "hello";
+  v.z = 13;
+  v.r = v;
+
+  printInt(v.x);
+  printString(v.y);
+  printInt(v.z);
+
+  printInt(v.r.x);
+  printString(v.r.y);
+  printInt(v.r.z);
+  return 0;
+}
