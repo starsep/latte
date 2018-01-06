@@ -1,0 +1,13 @@
+class X {
+  int x;
+  void v() {
+    x = 42;
+  }
+}
+
+int main() {
+  X x = new X;
+  x.v();
+  printInt(x.x);
+  return 0;
+}

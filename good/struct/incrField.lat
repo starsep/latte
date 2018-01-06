@@ -1,0 +1,14 @@
+class X {
+  int x;
+}
+
+int main() {
+  X x = new X;
+  x.x = 40;
+  x.x--;
+  x.x++;
+  x.x++;
+  x.x++;
+  printInt(x.x);
+  return 0;
+}

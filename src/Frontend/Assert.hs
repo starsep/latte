@@ -1,9 +1,7 @@
 module Assert where
 
-import {-# SOURCE #-} Typecheck (typeOf)
-
 import AbsLatte
-import Classes
+import {-# SOURCE #-} Classes
 import Context
 import Control.Monad
 import Data.Map ((!))
@@ -11,6 +9,7 @@ import qualified Data.Map as Map
 import Env
 import Errors
 import Pure
+import {-# SOURCE #-} Typecheck (typeOf)
 
 assertCorrectMain :: TypedFnDefs -> IO ()
 assertCorrectMain typedFns = do

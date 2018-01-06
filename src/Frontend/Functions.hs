@@ -1,32 +1,43 @@
 module Functions where
 
 import AbsLatte
+import {-# SOURCE #-} Classes
 import Context
 import Control.Monad
 import Control.Monad.RWS (runRWST)
 import qualified Data.Map as Map
+import Data.Maybe
 import Env
 import Errors
 import Pure
-import Typecheck
+import {-# SOURCE #-} Typecheck
 
-addTypedFnDef :: TypedFnDefs -> TopDef -> IO TypedFnDefs
-addTypedFnDef typed (FnDef outType ident args _) = do
-  when (Map.member ident typed) $
-    Errors.multipleFnDef ident $ Context []
-  return $ Map.insert ident (fnHeaderToFnType outType args) typed
-addTypedFnDef typed _ = return typed
+addTypedFnDef :: ClassesData -> TypedFnDefs -> TopDef -> IO TypedFnDefs
+addTypedFnDef classesData typed topDef = case topDef of
+  FnDef outType ident args _ -> do
+    when (Map.member ident typed) $
+      Errors.multipleFnDef ident $ Context []
+    return $ Map.insert ident (fnHeaderToFnType outType args) typed
+  ClassDef name _ -> return $ addTypedFnDefClass classesData name typed
+  ClassDefE name _ _ -> return $ addTypedFnDefClass classesData name typed
 
-typecheckFun :: (Type, Ident, [Arg], Block) -> TopDefScope -> IO ()
-typecheckFun (outType, i, args, body) (typed, classDefs, inhTree, cNames) = do
-  let fun = FnDef outType i args body
-      context = Context [CFun outType i args]
-  funState <- foldM (addFunctionArgToState context) Map.empty args
-  let initState = (funState, [], context)
-      initEnv = (typed, i, classDefs, inhTree, cNames)
+funContext :: (Type, Ident, [Arg]) -> Maybe Ident -> Context
+funContext (outType, ident, args) className' = case className' of
+  Nothing -> Context [CFun outType ident args]
+  Just className -> Context [CMethod outType ident args className]
+
+typecheckFun :: (Type, Ident, [Arg], Block) -> TopDefScope
+  -> Maybe Ident -> TCIdentState -> IO ()
+typecheckFun (outType, ident, args, body) scope className initIdent = do
+  let context = funContext (outType, ident, args) className
+      fun = FnDef outType ident args body
+  funState <- foldM (addFunctionArgToState context) initIdent args
+  let funState' = if isJust className then Map.insert (Ident "self") (ClassType $ fromJust className) funState else funState
+      initState = (funState', [], context)
+      initEnv = (ident, scope, className)
   void $ runRWST (typecheckBlock body) initEnv initState
   when ((outType /= Void) && not (isReturning (BStmt body))) $
-    Errors.notReturning i context
+    Errors.notReturning ident context
 
 addFunctionArgToState :: Context -> TCIdentState -> Arg -> IO TCIdentState
 addFunctionArgToState context state (Arg t argIdent) = do

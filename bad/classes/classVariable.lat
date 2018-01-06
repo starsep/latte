@@ -1,0 +1,11 @@
+class X {
+  int x() {
+    return y;
+  }
+}
+
+int main() {
+  X x = new X;
+  printInt(x.x());
+  return 0;
+}

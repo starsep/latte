@@ -7,7 +7,7 @@ import Data.Map (Map)
 type Locals = Map String Int
 
 classMethodLabel :: String -> String -> String
-classMethodLabel className method = className ++ "@" ++ method
+classMethodLabel className method = method ++ "@" ++ className
 
 localsProg :: Program -> Locals
 localsProg (Program topDefs) = foldl localsTopDef Map.empty topDefs
@@ -23,8 +23,9 @@ localsTopDef locals (ClassDef (Ident className) props) =
 localsClassProp :: String -> Locals -> ClassProp -> Locals
 localsClassProp _ locals (Field _ _) = locals
 localsClassProp className locals (Method t (Ident name) args block) =
-  let method = Ident $ classMethodLabel className name in
-  localsTopDef locals $ FnDef t method args block
+  let method = Ident $ classMethodLabel className name
+      args' = Arg (ClassType $ Ident className) (Ident "self") : args in
+  localsTopDef locals $ FnDef t method args' block
 
 localsBlock :: Block -> Int
 localsBlock (Block stmts) = sum $ map localsStmt stmts

@@ -1,0 +1,35 @@
+class X {
+  void tell() {
+    printString(what());
+  }
+
+  string what() {
+    return "I am X!";
+  }
+}
+
+class Y extends X {
+  string what() {
+    return "I am Y!";
+  }
+}
+
+class Z extends Y {
+  string what() {
+    return "I am Z!";
+  }
+}
+
+int main() {
+  X x = new X;
+  x.tell();
+  x = new Y;
+  x.tell();
+  x = new Z;
+  x.tell();
+  x = new Y;
+  x.tell();
+  x = new X;
+  x.tell();
+  return 0;
+}

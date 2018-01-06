@@ -16,8 +16,8 @@ emitStmt q = case q of
   BStmt block -> emitBlock block
   Decl t items -> forM_ items $ emitDecl t
   Ass left expr -> emitAss left expr
-  Incr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Plus (ELitInt 1))
-  Decr lv -> emitStmt $ Ass (EVar lv) (EAdd (EVar lv) Minus (ELitInt 1))
+  Incr lv -> emitStmt $ Ass lv (EAdd lv Plus (ELitInt 1))
+  Decr lv -> emitStmt $ Ass lv (EAdd lv Minus (ELitInt 1))
   Ret expr -> do
     _ <- emitExpr expr
     tell [Pop resultReg]
@@ -94,7 +94,7 @@ emitFor t ident e stmt = do
     While (ERel iVar LTH (EField aVar lenIdent)) $ BStmt $
       Block [
         Decl t [Init ident subs],
-        Incr iIdent,
+        Incr (EVar iIdent),
         stmt
       ]
     ]

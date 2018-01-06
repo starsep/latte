@@ -2,11 +2,11 @@ module Optimize where
 
 import Asm
 import Data.List.Unique
-import qualified Data.Set as Set
-import Data.Set (Set)
-import qualified Data.Map as Map
 import Data.Map (Map, (!))
+import qualified Data.Map as Map
 import Data.Maybe
+import Data.Set (Set)
+import qualified Data.Set as Set
 import Text.Read
 
 optimizeStmt :: AsmStmts -> AsmStmts
@@ -78,7 +78,7 @@ removeUnusedLabels :: AsmStmts -> AsmStmts
 removeUnusedLabels prog =
   let used = usedLabels prog
       isNotUnusedLabel s = case s of
-        Label x -> x `elem` used
+        Label x -> '@' `elem` x || x `elem` used
         Extern x -> x `elem` used
         _ -> True in
   filter isNotUnusedLabel prog
@@ -110,8 +110,9 @@ removeDeadCode prog =
       progLen = length prog
       numberedProg = zip [0..progLen - 1] prog
       useful = buildUseful Set.empty numberedProg
-      mainN = labels ! "main"
-      useful' = dfs mainN progLen prog labels useful
+      usefulLabels = map snd $ filter (isMainOrMethod . fst) (Map.toList labels)
+      dfsWithAcc acc x = Set.union acc $ dfs x progLen prog labels useful
+      useful' = foldl dfsWithAcc Set.empty usefulLabels
       nProg = filter (\(n, _) -> Set.member n useful') numberedProg in
       map snd nProg
 
@@ -145,9 +146,12 @@ buildUseful useful ((n, h):t) =
   buildUseful useful' t
 buildUseful useful [] = useful
 
+isMainOrMethod :: String -> Bool
+isMainOrMethod x = x == "main" || '@' `elem` x
+
 isUseful :: AsmStmt -> Bool
 isUseful stmt = case stmt of
-  Label "main" -> True
+  Label x -> isMainOrMethod x
   EmptyLine -> True
   SectionData -> True
   SectionText -> True

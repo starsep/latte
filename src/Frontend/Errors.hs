@@ -154,6 +154,17 @@ sameArgNames :: Ident -> ErrorFun
 sameArgNames ident =
   typecheck $ "duplicate argument name " ++ identString ident
 
+selfAssign :: ErrorFun
+selfAssign =
+  typecheck $ "trying to assign to " ++ selfString ++ ", it is readonly"
+
+selfVar :: ErrorFun
+selfVar =
+  typecheck $ "trying to declare variable " ++ selfString ++ ", it is keyword"
+
+shadowMethod :: Ident -> ErrorFun
+shadowMethod ident = typecheck $ "shadowing method " ++ identString ident
+
 shadowTopDef :: Ident -> ErrorFun
 shadowTopDef ident = typecheck $ "shadowing function " ++ identString ident
 

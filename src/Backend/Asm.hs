@@ -30,7 +30,7 @@ data AsmStmt
   | Cqo
   -- | Custom String [String]
   -- | CustomString String
-  | DataDecl String DataSize String
+  | DataDecl String DataSize [String]
   | Divide String
   | EmptyLine
   | Extern String
@@ -87,7 +87,7 @@ instance Show AsmStmt where
   --show (Custom op args) = op ++ " " ++ intercalate ", " args
   --show (CustomString s) = s
   show (DataDecl name size content) =
-    name ++ " " ++ show size ++ " " ++ content
+    name ++ " " ++ show size ++ " " ++ intercalate ", " content
   show (Divide divisor) = "idiv " ++ divisor
   show EmptyLine = ""
   show (Extern name) = "extern " ++ name

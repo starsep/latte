@@ -1,0 +1,14 @@
+class X {
+  void x() {
+    printInt(42);
+  }
+
+  void y() {
+    x();
+  }
+}
+int main() {
+  X x = new X;
+  x.y();
+  return 0;
+}

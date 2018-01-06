@@ -4,21 +4,19 @@ import AbsLatte
 import Asm
 import Control.Monad
 import Control.Monad.RWS
-import Data.List
 import Data.Map ((!))
 import qualified Data.Map as Map
 import Env
 import EmitExpr
+import EmitFunction
 import Label
 import State
 
 emitMethod :: Ident -> Ident -> [Arg] -> Block -> CMonad ()
-emitMethod className name args block = do
-  let label = classMethodLabel className name
-  tell [
-    Label label,
-    Return]
-  -- error "emitMethod isn't implemented" -- TODO
+emitMethod className name args block =
+  let method = classMethodIdent className name
+      args' = (Arg (ClassType className) (Ident "self") : args) in
+  emitFunction method args' block
 
 emitVTables :: CMonad ()
 emitVTables = do
@@ -32,12 +30,11 @@ emitVTable className methods = do
   let rmethods = reverse methods
       label = vtableLabel className
       methodsLabels = map vtableString rmethods
-      methodsLabels' = if null methodsLabels then ["0"] else methodsLabels
-      content = intercalate ", " methodsLabels'
+      content = if null methodsLabels then ["0"] else methodsLabels
   tell [DataDecl label DataQword content]
 
 vtableString :: ClassMethod -> String
-vtableString (ClassMethod _ method className) =
+vtableString (ClassMethod _ method className _) =
   classMethodLabel className method
 
 emitNewClass :: Ident -> CMonad Type
@@ -67,8 +64,25 @@ emitField obj ident = do
 
 emitMethodInvoke :: Expr -> Ident -> [Expr] -> CMonad Type
 emitMethodInvoke lv ident args = do
-  void $ error "class method invoking isn't implemeted" -- TODO
-  return Int -- TODO
+  (ClassType className) <- emitExpr lv
+  let methodName = classMethodIdent className ident
+  reg <- emitMethodVTable className ident
+  emitEApp' methodName (lv : args) (Just reg)
+
+emitMethodVTable :: ClassName -> Ident -> CMonad Register
+emitMethodVTable className method = do
+  let regs@[res, r1, r2] = last scratchRegisters : take 2 argRegisters
+  classesData <- askClassesData
+  let (methods, _) = classesData ! className
+      methods' = filter (\(ClassMethod _ name _ _) -> name == method) methods
+      (ClassMethod methodNumber _ _ _) = head methods'
+  localReserveRegs regs $
+    tell [
+      Pop r1,
+      Mov r2 $ show methodNumber,
+      Call "_vtableAsk",
+      Mov res resultReg]
+  return res
 
 findFieldIndex :: Ident -> Ident -> CMonad (Int, Type)
 findFieldIndex className field = do

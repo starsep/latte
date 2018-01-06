@@ -28,6 +28,9 @@ funString (out, name, args) =
       types = map typeOfArg args in
   typeString out ++ " " ++ identString name ++ typesString types
 
+selfString :: String
+selfString = identString (Ident "self")
+
 typeString :: Type -> String
 typeString t =
   typeColor ++ printTree t ++ normalColor

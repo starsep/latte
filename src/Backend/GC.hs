@@ -2,9 +2,9 @@ module GC where
 
 import AbsLatte
 import Asm
--- import Control.Monad
+import Control.Monad
 import Control.Monad.RWS (tell)
---import qualified Data.Map as Map
+import qualified Data.Map as Map
 import State
 
 isGCType :: Type -> Bool
@@ -17,11 +17,11 @@ gcScopeVars :: CMonad ()
 gcScopeVars = do
   (vars, _) <- getVars
   return ()
-  -- forM_ (Map.toList $ head vars) $ \(name, (addr, t)) ->
-    -- when (isGCType t) $ do
+  --forM_ (Map.toList $ head vars) $ \(name, (addr, t)) ->
+    --when (isGCType t) $ do
       -- TODO: GC
-      -- tell [Push $ show addr]
-      -- gcDecr
+      --tell [Push $ show addr]
+      --gcDecr
 
 callGcFun :: String -> CMonad ()
 callGcFun name = do
@@ -32,7 +32,7 @@ callGcFun name = do
       Call name]
 
 gcDecr :: CMonad ()
-gcDecr = return () -- callGcFun "_gcDecr"
+gcDecr = callGcFun "_gcDecr"
 
 gcIncr :: CMonad ()
 gcIncr = callGcFun "_gcIncr"

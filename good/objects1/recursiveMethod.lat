@@ -1,0 +1,14 @@
+class X {
+  void r(int x) {
+    if (x > 0) {
+      printInt(x);
+      r(x - 1);
+    }
+  }
+}
+
+int main() {
+  X x = new X;
+  x.r(10);
+  return 0;
+}

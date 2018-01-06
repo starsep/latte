@@ -1,0 +1,9 @@
+class X {
+  void x() {
+    string x = 42 * 5;
+  }
+}
+
+int main() {
+  return 0;
+}

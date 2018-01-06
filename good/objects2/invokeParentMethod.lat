@@ -1,0 +1,17 @@
+class X {
+  void x() {
+    printInt(42);
+  }
+}
+
+class Y extends X {
+  void y() {
+    x();
+  }
+}
+
+int main() {
+  Y y = new Y;
+  y.y();
+  return 0;
+}

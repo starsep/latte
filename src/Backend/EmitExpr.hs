@@ -6,6 +6,7 @@ import Control.Monad
 import Control.Monad.RWS (tell)
 import Data.Map ((!))
 import qualified Data.Map as Map
+import Data.Maybe
 import {-# SOURCE #-} EmitClass
 import Label
 import State
@@ -140,13 +141,22 @@ emitExpr q = case q of
     return Bool
 
 emitEApp :: Ident -> [Expr] -> CMonad Type
-emitEApp ident@(Ident name) args = do
+emitEApp ident args = do
+  typed <- askTypedFns
+  if Map.member ident typed then
+    emitEApp' ident args Nothing
+  else
+    emitExpr $ EMethod (EVar (Ident "self")) ident args
+
+emitEApp' :: Ident -> [Expr] -> Maybe Register -> CMonad Type
+emitEApp' ident@(Ident name) args callReg = do
   let argsLen = length args
       argsRegs = take (min 6 argsLen) argRegisters
       argsToRemove = argsLen - 6
   forM_ (reverse args) emitExpr
   tell $ map Pop argsRegs
-  tell [Call name]
+  let toCall = fromMaybe name callReg
+  tell [Call toCall]
   when (argsToRemove > 0) $
     tell [Add stackPointer $ show $ argsToRemove * 8]
   typed <- askTypedFns
@@ -159,14 +169,17 @@ emitEApp ident@(Ident name) args = do
 emitEVarPtr :: Ident -> CMonad Type
 emitEVarPtr (Ident name) = do
   (vars, _) <- getVars
-  let varsScope = head $ filter (Map.member name) vars
-      (Address addr, t) = varsScope ! name
-  localReserve 1 $ \[r] ->
-    tell [
-      Mov r basePointer,
-      Sub r $ show addr,
-      Push r]
-  return t
+  let varsScope = filter (Map.member name) vars
+  if null varsScope then
+    emitLField (EVar (Ident "self")) (Ident name)
+  else do
+    let (Address addr, t) = head varsScope ! name
+    localReserve 1 $ \[r] ->
+      tell [
+        Mov r basePointer,
+        Sub r $ show addr,
+        Push r]
+    return t
 
 dereferenceTop :: CMonad ()
 dereferenceTop =

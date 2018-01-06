@@ -9,20 +9,22 @@ import Errors
 
 type TypecheckOutput = (TypedFnDefs, ClassesData)
 
+type ClassName = Ident
 data ClassField = ClassField Int Ident Type deriving (Show)
-data ClassMethod = ClassMethod Int Ident Ident deriving (Show)
+data ClassMethod = ClassMethod Int Ident ClassName [Type] deriving (Show)
 type ClassData = ([ClassMethod], [ClassField])
 type ClassesData = Map Ident ClassData
 
-type TopDefScope = (TypedFnDefs, ClassDefs, InheritanceTree, ClassNames)
+type TopDefScope =
+  (TypedFnDefs, ClassDefs, InheritanceTree, ClassNames, ClassesData)
 type TypedFnDefs = Map Ident Type
 type ClassDef = [ClassProp]
 type ClassDefs = Map Ident ClassDef
-type ClassNames = [Ident]
+type ClassNames = [ClassName]
 
 type InheritanceTree = Map Ident (Maybe Ident)
 
-type TCEnv = (TypedFnDefs, Ident, ClassDefs, InheritanceTree, ClassNames)
+type TCEnv = (Ident, TopDefScope, Maybe Ident)
 type TCIdentState = Map Ident Type
 type TCDeclState = [Ident]
 type TCState = (TCIdentState, TCDeclState, Context)
@@ -79,13 +81,23 @@ putContext newContext = do
 
 askTyped :: TCMonad TypedFnDefs
 askTyped = do
-  (typed, _, _, _, _) <- ask
+  (_, (typed, _, _, _, _), _) <- ask
   return typed
 
 askIdent :: TCMonad Ident
 askIdent = do
-  (_, ident, _, _, _) <- ask
+  (ident, _, _) <- ask
   return ident
+
+askClassName :: TCMonad (Maybe Ident)
+askClassName = do
+  (_, _, className) <- ask
+  return className
+
+askScope :: TCMonad TopDefScope
+askScope = do
+  (_, scope, _) <- ask
+  return scope
 
 askReturn :: TCMonad Type
 askReturn = do
@@ -96,8 +108,13 @@ askReturn = do
 
 askClassDefs :: TCMonad ClassDefs
 askClassDefs = do
-  (_, _, classDefs, _, _) <- ask
+  (_, classDefs, _, _, _) <- askScope
   return classDefs
+
+askClassData :: Ident -> TCMonad ClassData
+askClassData className = do
+  (_, _, _, _, classesData) <- askScope
+  return $ classesData ! className
 
 askProps :: TCMonad ClassDef
 askProps = do
@@ -107,12 +124,12 @@ askProps = do
 
 askInheritanceTree :: TCMonad InheritanceTree
 askInheritanceTree = do
-  (_, _, _, inheritanceTree, _) <- ask
+  (_, _, inheritanceTree, _, _) <- askScope
   return inheritanceTree
 
 askClassNames :: TCMonad ClassNames
 askClassNames = do
-  (_, _, _, _, classNames) <- ask
+  (_, _, _, classNames, _) <- askScope
   return classNames
 
 addContext :: ContextItem -> TCMonad ()

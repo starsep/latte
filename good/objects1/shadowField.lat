@@ -1,0 +1,14 @@
+class X {
+  int x;
+
+  void v() {
+    string x = "test";
+    printString(x);
+  }
+}
+
+int main() {
+  X x = new X;
+  x.v();
+  return 0;
+}

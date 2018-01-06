@@ -6,12 +6,14 @@ import Classes
 import Context
 import Control.Monad
 import Control.Monad.Loops
-import Control.Monad.RWS (get, put)
+import Control.Monad.RWS hiding (state)
 import qualified Data.Map as Map
 import Data.Int
+import Data.Maybe
 import Data.Map ((!))
 import Env
 import qualified Errors
+import Label
 import PrintLatte (printTree)
 import Pure
 
@@ -166,6 +168,23 @@ outputTypeFun ident args = do
 outputType :: Ident -> [Expr] -> TCMonad Type
 outputType ident args = do
   typed <- askTyped
+  className <- askClassName
+  if isJust className then
+    outputTypeFromMethod (fromJust className) ident args typed
+  else
+    outputTypeFromFun ident args typed
+
+outputTypeFromMethod :: ClassName -> Ident -> [Expr]
+  -> TypedFnDefs -> TCMonad Type
+outputTypeFromMethod className ident args typed = do
+  let methodName = classMethodIdent className ident
+  if Map.member methodName typed then
+    outputTypeFun methodName args
+  else
+    outputTypeFromFun ident args typed
+
+outputTypeFromFun :: Ident -> [Expr] -> TypedFnDefs -> TCMonad Type
+outputTypeFromFun ident args typed =
   if Map.member ident typed then
     outputTypeFun ident args
   else
@@ -174,6 +193,12 @@ outputType ident args = do
 checkShadow :: Ident -> TCMonad ()
 checkShadow ident = do
   typed <- askTyped
+  className' <- askClassName
+  when (isJust className') $ do
+    let className = fromJust className'
+        methodName = classMethodIdent className ident
+    when (Map.member methodName typed) $
+      showError $ Errors.shadowMethod methodName
   when (Map.member ident typed) $
     showError $ Errors.shadowTopDef ident
 
@@ -182,6 +207,8 @@ typecheckDecl item t = do
   when (t == Void) $
     showError $ Errors.voidVariable $ itemIdent item
   let ident = itemIdent item
+  when (ident == Ident "self") $
+    showError Errors.selfVar
   state <- getState
   addDecl ident
   checkShadow ident
@@ -193,17 +220,15 @@ typecheckDecl item t = do
         _ -> return ()
     Init _ expr -> typecheckAss (EVar ident) expr
 
-typecheckIncr :: Ident -> TCMonad ()
-typecheckIncr ident = do
-  assertVarDeclared ident
-  assertType (EVar ident) Int
-
 typecheckAss :: Expr -> Expr -> TCMonad ()
 typecheckAss lvalue expr = do
   ltype <- typeOf lvalue
   rtype <- typeOf expr
   case lvalue of
-    EVar _ -> assertType expr ltype
+    EVar (Ident name) -> do
+      when (name == "self") $
+        showError Errors.selfAssign
+      assertType expr ltype
     ESubs _ -> do
       compatible <- isCompatibleType ltype rtype
       unless compatible $
@@ -234,8 +259,8 @@ typecheckStmtCase stmt = do
     BStmt block -> typecheckBlock block
     Decl t items -> forM_ items (`typecheckDecl` t)
     Ass lvalue expr -> typecheckAss lvalue expr
-    Incr ident -> typecheckIncr ident
-    Decr ident -> typecheckIncr ident
+    Incr lv -> typecheckAss lv (EAdd lv Plus (ELitInt 1))
+    Decr lv -> typecheckAss lv (EAdd lv Minus (ELitInt 1))
     Ret expr -> do
       t <- typeOf expr
       when (returnType == Void) $

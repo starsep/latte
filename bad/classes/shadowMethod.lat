@@ -1,0 +1,10 @@
+class X {
+  void x() {}
+  void y() {
+    string x = "42";
+  }
+}
+
+int main() {
+  return 0;
+}

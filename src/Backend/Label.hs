@@ -2,6 +2,7 @@ module Label where
 
 import AbsLatte
 import Asm
+import Env
 import State
 import Control.Monad.RWS (tell)
 
@@ -52,9 +53,12 @@ whileLabels = do
   return (fname ++ "$whileBegin#" ++ show labelId,
     fname ++ "$whileAfter#" ++ show labelId')
 
-classMethodLabel :: Ident -> Ident -> String
+classMethodLabel :: ClassName -> Ident -> String
 classMethodLabel (Ident className) (Ident method) =
   method ++ "@" ++ className
+
+classMethodIdent :: ClassName -> Ident -> Ident
+classMethodIdent className method = Ident $ classMethodLabel className method
 
 vtableLabel :: Ident -> String
 vtableLabel (Ident className) = "vtable~" ++ className

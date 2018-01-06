@@ -3,7 +3,8 @@
 #include <string.h>
 
 #define DEBUG 0
-#define fprintf if(DEBUG)fprintf
+#define fprintf \
+  if (DEBUG) fprintf
 
 typedef long long Int64;
 typedef void *Ptr;
@@ -25,13 +26,9 @@ void _free(Ptr ptr) {
   free(ptr);
 }
 
-Ptr *_malloc(Int64 size) {
-  return malloc(size);
-}
+Ptr *_malloc(Int64 size) { return malloc(size); }
 
-Ptr *_calloc(Int64 num, Int64 size) {
-  return calloc(num, size);
-}
+Ptr *_calloc(Int64 num, Int64 size) { return calloc(num, size); }
 
 Int64 readInt() {
   Int64 result;
@@ -60,17 +57,26 @@ static Ptr _new(Int64 size) {
 Ptr _newClass(Int64 size, Ptr vtable) {
   Ptr res = _new(size + 1);
   fprintf(stderr, "NEW CLASS %lld %lld\n", size, (Int64)vtable);
-  ((Ptr*)res)[0] = vtable;
+  ((Ptr *)res)[0] = vtable;
   return res;
 }
 
+Ptr _vtableAsk(Ptr **obj, Int64 n) {
+  fprintf(stderr, "VTABLE ASK(obj=%lld, n=%lld)", (Int64)obj, n);
+  Ptr *vtable = obj[0];
+  fprintf(stderr, ", VTABLE=%lld", (Int64)vtable);
+  Ptr res = vtable[n];
+  fprintf(stderr, " -> %lld\n", (Int64)res);
+  return res;
+}
 
 Int64 _arrayLength(Int64 *array) { return array[0]; }
 
 Int64 *_arrayPtr(Int64 *array, Int64 index) {
   Int64 *res = array + index + 1;
   // TODO: remove debug
-  fprintf(stderr, "ARRAY PTR of %lld with index %lld is %lld\n", (Int64)array, index, (long long)res);
+  fprintf(stderr, "ARRAY PTR of %lld with index %lld is %lld\n", (Int64)array,
+          index, (long long)res);
   return res;
 }
 
@@ -83,11 +89,11 @@ Ptr _newArray(Int64 size) {
 }
 
 Ptr _classField(Ptr obj, Int64 n) {
-  Ptr res = ((Int64*)obj) + n + 1; 
-  fprintf(stderr, "CLASS FIELD %lld, n %lld = %lld\n", (Int64)obj, n, (Int64)res);
+  Ptr res = ((Int64 *)obj) + n + 1;
+  fprintf(stderr, "CLASS FIELD %lld, n %lld = %lld\n", (Int64)obj, n,
+          (Int64)res);
   return res;
 }
-
 
 String _copyStr(const String s) {
   int len = strlen(s) + 1;
@@ -161,6 +167,7 @@ void _gcDecr(Ptr ptr) {
     return;
   }
   g->count--;
+  fprintf(stderr, "COUNT: %d\n", g->count);
   if (g->count == 0) {
     _free(g->ptr);
     gcCounter *next = g->next;

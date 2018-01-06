@@ -10,6 +10,8 @@ import Data.Map ((!), Map)
 import Data.Maybe
 import Env
 import qualified Errors
+import Functions
+import Label
 import Pure
 
 addInhTree :: InheritanceTree -> Ident -> Ident -> InheritanceTree
@@ -65,8 +67,8 @@ findCycleDfs ident = do
     findCycleDfs $ fromJust parent
 
 checkClass :: Ident -> TopDefScope -> IO ()
-checkClass name (typed, classDefs, inhTree, classNames) = do
-  let initEnv = (typed, name, classDefs, inhTree, classNames)
+checkClass name scope = do
+  let initEnv = (name, scope, Just name)
       initState = (Map.empty, [], Context [CClass name])
   void $ runRWST checkClassM initEnv initState
 
@@ -106,7 +108,13 @@ isFieldConflict f prop = f == propName prop
 checkMethod :: Type -> Ident -> [Arg] -> Block -> TCMonad ()
 checkMethod out name args body = do
   className <- askIdent
+  scope <- askScope
   checkVirtualMethod className (out, name, args)
+  (_, fields) <- askClassData className
+  let methodLabel = classMethodIdent className name
+      identState = Map.fromList $ map (\(ClassField _ n t) -> (n, t)) fields
+      fun = (out, methodLabel, args, body)
+  lift $ typecheckFun fun scope (Just className) identState
 
 checkVirtualMethod :: Ident -> (Type, Ident, [Arg]) -> TCMonad ()
 checkVirtualMethod className method = do
@@ -126,9 +134,7 @@ checkVirtualMethod className method = do
 
 isMethodConflict :: (Type, Ident, [Arg]) -> ClassProp -> Bool
 isMethodConflict (out, name, args) (Method out' name' args' _) =
-  let typeOfArg (Arg t _) = t
-      types = map typeOfArg in
-  name == name' && (out /= out' || types args /= types args')
+  name == name' && (out /= out' || argsToTypes args /= argsToTypes args')
 isMethodConflict (_, name, _) (Field _ fieldName) = name == fieldName
 
 checkProp :: ClassProp -> TCMonad ()
@@ -218,21 +224,22 @@ buildClassDataImpl className = do
 
 replaceMethod :: Ident -> Ident -> (Bool, [ClassMethod]) ->
   ClassMethod -> (Bool, [ClassMethod])
-replaceMethod className name (r, methods) m@(ClassMethod i name' className') =
+replaceMethod className name (r, methods) m@(ClassMethod i name' _ t) =
   if name == name' then
-    (True, ClassMethod i name className : methods)
+    (True, ClassMethod i name className t : methods)
   else
     (r, m : methods)
 
 addMethod :: Ident -> [ClassMethod] -> ClassProp -> [ClassMethod]
-addMethod className [] (Method _ name _ _) = [ClassMethod 0 name className]
-addMethod className methods@(ClassMethod i _ _ : _) (Method _ name _ _) =
+addMethod className [] (Method o name args _) =
+  [ClassMethod 0 name className (o : argsToTypes args)]
+addMethod className methods@(ClassMethod i _ _ _ : _) (Method o name args _) =
   let replaceFun = replaceMethod className name
       (replaced, methods') = foldl replaceFun (False, []) methods in
   if replaced then
     reverse methods'
   else
-    ClassMethod (i + 1) name className : methods
+    ClassMethod (i + 1) name className (o : argsToTypes args): methods
 addMethod _ methods Field{} = methods
 
 addField :: [ClassField] -> ClassProp -> [ClassField]
@@ -268,3 +275,11 @@ cdParent :: Ident -> CDMonad (Maybe Ident)
 cdParent className = do
     inhTree <- cdAskInheritanceTree
     return $ inhTree ! className
+
+addTypedFnDefClass :: ClassesData -> Ident -> TypedFnDefs -> TypedFnDefs
+addTypedFnDefClass classesData className typed =
+  let (methods, _) = classesData ! className
+      methodType (ClassMethod _ name _ types) =
+        (classMethodIdent className name, Fun (head types) (tail types))
+      typedMethods = Map.fromList $ map methodType methods in
+  Map.union typedMethods typed

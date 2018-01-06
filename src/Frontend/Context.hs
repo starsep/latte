@@ -12,6 +12,7 @@ instance Show Context where
 
 data ContextItem
   = CFun Type Ident [Arg]
+  | CMethod Type Ident [Arg] Ident
   | CClass Ident
   | CWhile Expr
   | CIf Expr
@@ -34,6 +35,8 @@ isNotStmt contextItem = case contextItem of
 instance Show ContextItem where
   show (CFun outType i args) =
     "In function ‘" ++ funString (outType, i, args) ++ "’:"
+  show (CMethod outType i args _) =
+    "In method ‘" ++ funString (outType, i, args) ++ "’:"
   show (CClass name) = "In " ++ classString name ++ ":"
   show (CWhile bExpr) = insideExpr "while" bExpr
   show (CIf bExpr) = insideExpr "if" bExpr

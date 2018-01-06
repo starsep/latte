@@ -6,8 +6,7 @@ import Control.Monad
 import Control.Monad.RWS (runRWS, tell)
 import Env (TypecheckOutput)
 import EmitClass
-import EmitExpr
-import EmitStmt
+import EmitFunction
 import Locals
 import Optimize
 import Pure (standardFunctionsNames)
@@ -38,79 +37,21 @@ emitProgram (Program topdefs) = do
     emitStringLiterals (reverse literals) 0
 
 emitTopDef :: TopDef -> CMonad ()
-emitTopDef (FnDef _ (Ident name) args block) = do
-  emptyVars
-  putName name
-  funHeader
-  emitArgs args
-  emitBlock block
-  funFooter
-
-emitTopDef (ClassDef className props) = do
+emitTopDef (FnDef _ name args block) = emitFunction name args block
+emitTopDef (ClassDef className props) =
   forM_ props $ \prop -> case prop of
     Field{} -> return ()
     Method _ name args block -> emitMethod className name args block
 emitTopDef (ClassDefE name _ props) = emitTopDef (ClassDef name props)
 
-argDecl :: Arg -> Stmt
-argDecl (Arg t ident) = Decl t [NoInit ident]
-
-emitArgs :: [Arg] -> CMonad ()
-emitArgs args = do
-  let argsDecl = map argDecl args
-      argsRegNum = min 6 $ length args
-      argsRegs = take argsRegNum argRegisters
-      argsInRegs = take argsRegNum args
-      argsWithRegs = zip argsRegs argsInRegs
-      restArgs = drop argsRegNum args
-      argsIndexes = map (*8) [2..] :: [Int]
-  forM_ argsRegs reserveReg
-  forM_ argsDecl emitStmt
-  forM_ argsWithRegs $ \(reg, Arg _ ident) -> do
-    localReserve 1 $ \[addr] -> do
-      void $ emitLValue $ LVar ident
-      tell [
-        Pop addr,
-        Mov ("[" ++ addr ++ "]") reg]
-    freeRegs [reg]
-  forM_ (zip restArgs argsIndexes) $ \(Arg _ ident, index) ->
-    localReserve 2 $ \[addr, val] -> do
-      void $ emitLValue $ LVar ident
-      tell [
-        Pop addr,
-        Mov val $ "[" ++ basePointer ++ " + " ++ show index ++ "]",
-        Mov ("[" ++ addr ++ "]") val]
-
 emitStringLiterals :: [String] -> Int -> CMonad ()
 emitStringLiterals [] _ = return ()
 emitStringLiterals (s:rest) i = do
   let label = stringLiteralFromId i
-  tell [DataDecl label DataByte $ parseStringLiteral s]
+  tell [DataDecl label DataByte [parseStringLiteral s]]
   emitStringLiterals rest (i+1)
 
 emitHeader :: CMonad ()
 emitHeader = do
   tell [Global "main", EmptyLine]
   tell $ map Extern standardFunctionsNames
-
-funHeader :: CMonad ()
-funHeader = do
-  name <- getName
-  locSize <- localsSize
-  tell [
-    Label name,
-    Push basePointer,
-    Mov basePointer stackPointer,
-    Sub stackPointer locSize]
-
-funFooter :: CMonad ()
-funFooter = do
-  name <- getName
-  locSize <- localsSize
-  tell [Label $ name ++ "$end"]
-  when (name == "main") $
-    tell [Call "_gcClean"]
-  tell [
-    Add stackPointer locSize,
-    Pop basePointer,
-    Return]

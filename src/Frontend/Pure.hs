@@ -93,7 +93,8 @@ standardFunctions =
     (Ident "_gcDecr", Fun Void [Str]),
     (Ident "_gcIncr", Fun Void [Str]),
     (Ident "_newArray", Fun Str [Int]),
-    (Ident "_newClass", Fun Str [Int, Str])
+    (Ident "_newClass", Fun Str [Int, Str]),
+    (Ident "_vtableAsk", Fun Str [Str, Int])
   ]
 
 standardFunctionsNames :: [String]

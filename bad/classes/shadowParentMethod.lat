@@ -1,0 +1,14 @@
+class X {
+  void x() {}
+}
+
+
+class Y extends X {
+  void y() {
+    string x = "42";
+  }
+}
+
+int main() {
+  return 0;
+}
