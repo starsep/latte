@@ -4,8 +4,8 @@ GHCFLAGS=-Wall
 GHC=ghc
 
 SHELL_SCRIPTS=latc latc_x86_64
-TEST_DIRECTORIES=good bad extensions gr5
-FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TEST_DIRECTORIES)
+TESTS=$(shell find good bad -name "*.lat" -o -name "*.input" -o -name "*.output" | xargs)
+FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TESTS)
 PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
@@ -128,4 +128,5 @@ coverage: clean test
 	hpc markup Latte $(HPC_EXCLUDES)
 
 clean:
+	find good bad -type f ! -name "*.lat" ! -name "*.input" ! -name "*.out*" | xargs rm -f && \
 	rm -rf $(BUILD) $(TMP) $(BINARIES) $(TEST_DIR) *.tgz *.tix lib/runtime.o
