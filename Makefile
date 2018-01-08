@@ -5,7 +5,7 @@ GHC=ghc
 
 SHELL_SCRIPTS=latc latc_x86_64
 TESTS=$(shell find good bad -name "*.lat" -o -name "*.input" -o -name "*.output" | xargs)
-FILES_TO_PACK=$(SHELL_SCRIPTS) src Makefile README $(TESTS)
+FILES_TO_PACK=$(SHELL_SCRIPTS) src lib Makefile README $(TESTS)
 PACK_NAME=fc359081.tgz
 
 BINARIES=TestLatte Latte
