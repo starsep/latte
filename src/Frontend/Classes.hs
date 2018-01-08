@@ -74,7 +74,6 @@ checkClass name scope = do
 
 checkClassM :: TCMonad ()
 checkClassM = do
-  name <- askIdent
   props <- askProps
   let propNames = map propName props
       duplicate = firstNotUnique propNames

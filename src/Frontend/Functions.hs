@@ -30,7 +30,6 @@ typecheckFun :: (Type, Ident, [Arg], Block) -> TopDefScope
   -> Maybe Ident -> TCIdentState -> IO ()
 typecheckFun (outType, ident, args, body) scope className initIdent = do
   let context = funContext (outType, ident, args) className
-      fun = FnDef outType ident args body
   funState <- foldM (addFunctionArgToState context) initIdent args
   let funState' = if isJust className then Map.insert (Ident "self") (ClassType $ fromJust className) funState else funState
       initState = (funState', [], context)

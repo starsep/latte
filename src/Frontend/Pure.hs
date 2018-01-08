@@ -34,16 +34,6 @@ isTrue bExpr = case bExpr of
   EAnd b1 b2 -> isTrue b1 && isTrue b2
   _ -> False
 
-isSimpleType :: Type -> Bool
-isSimpleType t = case t of
-  Int -> True
-  Bool -> True
-  Str -> True
-  Void -> False
-  Array _ -> False
-  Fun _ _ -> False
-  ClassType _ -> False
-
 isClass :: Type -> Bool
 isClass t = case t of
   ClassType _ -> True

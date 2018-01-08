@@ -2,9 +2,9 @@ module GC where
 
 import AbsLatte
 import Asm
-import Control.Monad
+-- import Control.Monad
 import Control.Monad.RWS (tell)
-import qualified Data.Map as Map
+-- import qualified Data.Map as Map
 import State
 
 isGCType :: Type -> Bool
@@ -15,7 +15,7 @@ isGCType t = case t of
 
 gcScopeVars :: CMonad ()
 gcScopeVars = do
-  (vars, _) <- getVars
+  --(vars, _) <- getVars
   return ()
   --forM_ (Map.toList $ head vars) $ \(name, (addr, t)) ->
     --when (isGCType t) $ do

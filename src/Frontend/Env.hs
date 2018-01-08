@@ -3,7 +3,7 @@ module Env where
 import AbsLatte
 import Context
 import Control.Monad
-import Control.Monad.RWS (RWST, ask, get, lift, put, void)
+import Control.Monad.RWS (RWST, ask, get, lift, put)
 import Data.Map (Map, (!))
 import Errors
 
@@ -38,7 +38,7 @@ showError f = do
 showErrorV :: (Context -> IO ()) -> TCMonad Type
 showErrorV f = do
   _ <- showError f
-  return Void
+  error ""
 
 addDecl :: Ident -> TCMonad ()
 addDecl ident = do
@@ -51,33 +51,20 @@ getState = do
   (s, _, _) <- get
   return s
 
-putState :: TCIdentState -> TCMonad TCIdentState
+putState :: TCIdentState -> TCMonad ()
 putState newState = do
-  (oldState, decl, context) <- get
+  (_, decl, context) <- get
   put (newState, decl, context)
-  return oldState
-
-getDecl :: TCMonad TCDeclState
-getDecl = do
-  (_, decl, _) <- get
-  return decl
-
-putDecl :: TCDeclState -> TCMonad TCDeclState
-putDecl newDecl = do
-  (state, oldDecl, context) <- get
-  put (state, newDecl, context)
-  return oldDecl
 
 getContext :: TCMonad Context
 getContext = do
   (_, _, context) <- get
   return context
 
-putContext :: Context -> TCMonad Context
+putContext :: Context -> TCMonad ()
 putContext newContext = do
-  (state, decl, oldContext) <- get
+  (state, decl, _) <- get
   put (state, decl, newContext)
-  return oldContext
 
 askTyped :: TCMonad TypedFnDefs
 askTyped = do
@@ -135,16 +122,16 @@ askClassNames = do
 addContext :: ContextItem -> TCMonad ()
 addContext contextItem = do
   (Context context) <- getContext
-  void $ putContext $ Context $ contextItem : context
+  putContext $ Context $ contextItem : context
 
 addContextStmt :: ContextItem -> TCMonad ()
 addContextStmt contextItem = do
   (Context context) <- getContext
   let contextNoStmt = filter isNotStmt context
-  void $ putContext $ Context $ contextItem : contextNoStmt
+  putContext $ Context $ contextItem : contextNoStmt
 
 dropContext :: TCMonad ()
 dropContext = do
   (Context context) <- getContext
   unless (null context) $
-    void $ putContext $ Context $ tail context
+    putContext $ Context $ tail context

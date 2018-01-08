@@ -212,7 +212,7 @@ typecheckDecl item t = do
   state <- getState
   addDecl ident
   checkShadow ident
-  void $ putState (Map.insert (itemIdent item) t state)
+  putState (Map.insert (itemIdent item) t state)
   case item of
     NoInit _ ->
       case t of

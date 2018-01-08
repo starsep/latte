@@ -1,4 +1,4 @@
-module Optimize where
+module Optimize (optimize) where
 
 import Asm
 import Data.List.Unique

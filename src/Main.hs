@@ -1,6 +1,5 @@
 module Main (main) where
 
-import AbsLatte
 import Control.Monad
 import Context
 import Compiler
@@ -45,7 +44,7 @@ main = do
         Ok p -> return p
         Bad msg -> do
           parsing msg $ Context [CParLex]
-          return $ Program []
+          error "Parsing failed"
     types <- check program
     hPutStrLn stderr "OK"
     putStrLn $ compiler optimizeOn program types

@@ -2,8 +2,20 @@ Filip Czaplicki <fc359081@students.mimuw.edu.pl>
 
 [![Build Status](https://travis-ci.com/starsep/latte.svg?token=pEpks3xQCroxuTSsHPm9&branch=master)](https://travis-ci.com/starsep/latte)
 
+# Punktacja
+Zaimplementowałem następujące elementy:
+- front-end (4)
+- back-end x86 (10)
+- wykorzystanie rejestrów dla x86 - dodatkowo do 4p (na 4p alokacja rejestrów)
+- optymalizacje - do 3p
+- tablice (2)
+- struktury (2)
+- obiekty (atrybuty, metody, dziedziczenie bez zastępowania metod) - dodatkowo (4)
+- metody wirtualne - dodatkowo 4, czyli za obiekty z metodami wirtualnymi można uzyskać 10 punktów.
+- odśmiecanie (2)
+
 # Kompilacja
-Program kompliluje się po wykonaniu `make`.
+Program kompiluje się po wykonaniu `make`.
 Za pomocą `bnfc`, `happy` oraz `alex` generowane jest z
 gramatyki część źródeł.
 Napisany przeze mnie kod wraz z wygenerowanym kompilowany
@@ -12,11 +24,12 @@ W korzeniu projektu powstaje binarka `Latte`.
 
 # Uruchamianie programu
 Program `Latte` przyjmuje jako parametry:
-- ściężkę do pliku źródłowego
+- ścieżkę do pliku źródłowego
 - (opcjonalnie) flagę `-O0` (słownie: minus o zero),
   która wyłącza optymalizacje
 
 Wynik wypisuje na standardowe wyjście.
+Jest to 64-bitowy asembler notacji Intela, implementacja NASM.
 
 Napisałem także dwa skrypty bashowe
 odpalające `Latte`: `latc` oraz `latc_x86_64`.
@@ -24,20 +37,59 @@ Działają one zgodnie ze specyfikacją zadania.
 
 # Narzędzia i biblioteki
 - BNFC
-- Haskell oraz jego standardowa biblioteka
+- kompilator języka Haskell ghc oraz jego standardowa biblioteka
 - biblioteka mtl: monada ReaderWriterState - https://hackage.haskell.org/package/mtl
+- biblioteka Data.List.Unique - https://hackage.haskell.org/package/Unique
+  oraz jej zależność extra - https://hackage.haskell.org/package/extra
+- biblioteka monad-loops - https://hackage.haskell.org/package/monad-loops
+- NASM - nasm.us - kompilator asemblera
+- gcc - kompilator C - do skompilowania runtime.c oraz zlinkowania
 
 # Struktura projektu
 - src
-    * Latte.hs - główny plik kompilatora, obsługa IO, argumentów itp.
-    * Compiler.hs - backend kompilatora
-    * Typechecker.hs - statyczna analiza kodu/frontend kompilator
+  - Backend
+    * Asm.hs - definicje typów/funkcji związanych z asemblerem
+    * Compiler.hs - główny plik backendu kompilatora
+    * EmitClass.hs - generowanie kodu klas
+    * EmitClass.hs-boot - plik nagłówkowy dla EmitClass.hs
+    * EmitExpr.hs - generowanie kodu dla wyrażeń
+    * EmitFunction.hs - generowanie kodu funkcji/metod
+    * EmitStmt.hs - generowanie kodu dla wyrażeń
+    * GC.hs - kod związany z Garbage Collection
+    * Label.hs - asemblerowe etykiety
+    * Locals.hs - liczenie ile potrzeba pamięci na zmienne lokalne
+    * Optimize.hs - optymalizacje
+    * State.hs - "stan" kompilacji
+  - Frontend
+    * Assert.hs - wszelakie asserty
+    * Check.hs - główny plik frontendu
+    * Classes.hs - sprawdzanie klas, dziedziczenia itp.
+    * Classes.hs-boot - plik nagłówkowy dla Classes.hs
+    * Context.hs - kontekst błędu
+    * Env.hs - "środowisko" - stan frontendu, częściowo używany w backendzie
     * Errors.hs - funkcje pomocnicze do wypisywania błędów
-    * Latte.cf - gramatyka języka
+    * Functions.hs - sprawdzenie funkcji/metod
+    * Print.hs - funkcji pomocnicze związane z wypisywaniem błędów
+    * Print.hs-boot - plik nagłówkowy dla Print.hs
+    * Pure.hs - funkcje czyste, niekorzystające z monad
+    * Typecheck.hs - statyczna analiza kodu
+    * Typecheck.hs-boot - plik nagłówkowy dla Typecheck.hs
+  * Main.hs - główny plik kompilatora, obsługa IO, argumentów itp.
+  * Latte.cf - gramatyka języka
+- lib
+  * runtime.c - implementacja funkcji printInt itp. oraz wewnętrznie używanych
 - `latc`
 - `latc_x86_64`
 - Makefile
 - README
+
+# Optymalizacje
+Optymalizacje zaimplementowane są w src/Backend/Optimize.hs. Funkcja:   
+- `optimizeStmt` robi "peephole optimization", lokalnie zastępuje instrukcje, usuwa niepotrzebne
+- `removeUnusedLabels` usuwa nieużywane etykiety
+- `removeDeadCode` usuwa martwy kod przy użyciu dfsa po instrukcjach asemblera.
+- `optimizeOnce` jest złożeniem tych funkcji.
+- `optimize` odpala `optimizeOnce` aż do uzyskanie punktu stałego 
 
 # Zapożyczenia
 Moje projekty:

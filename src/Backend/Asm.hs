@@ -12,7 +12,6 @@ instance Show Address where
   show (Address n) = "qword[" ++ basePointer ++ " - " ++ show n ++ "]"
 
 isAddress :: String -> Bool
-isAddress [] = False
 isAddress s = head s == head (show (Address 0))
 
 printAsm :: AsmStmts -> String
@@ -24,12 +23,9 @@ printAsm = foldl (\acc x ->
 
 data AsmStmt
   = Add String String
-  | And String String
   | Call String
   | Cmp String String
   | Cqo
-  -- | Custom String [String]
-  -- | CustomString String
   | DataDecl String DataSize [String]
   | Divide String
   | EmptyLine
@@ -43,7 +39,6 @@ data AsmStmt
   | Movzx String String
   | Mul String
   | Negate String
-  | Or String String
   | Pop String
   | Push String
   | Return
@@ -57,7 +52,6 @@ data AsmStmt
 
 indent :: AsmStmt -> Bool
 indent stmt = case stmt of
-  -- CustomString{} -> False
   EmptyLine -> False
   Extern{} -> False
   Global{} -> False
@@ -80,12 +74,9 @@ relOpToAsm op = case op of
 
 instance Show AsmStmt where
   show (Add dest src) = showBinOp "add" dest src
-  show (And left right) = showBinOp "and" left right
   show (Call name) = "call " ++ name
   show (Cmp arg1 arg2) = showBinOp "cmp" arg1 arg2
   show Cqo = "cqo"
-  --show (Custom op args) = op ++ " " ++ intercalate ", " args
-  --show (CustomString s) = s
   show (DataDecl name size content) =
     name ++ " " ++ show size ++ " " ++ intercalate ", " content
   show (Divide divisor) = "idiv " ++ divisor
@@ -100,7 +91,6 @@ instance Show AsmStmt where
   show (Movzx dest src) = showBinOp "movzx" dest src
   show (Mul arg) = "imul " ++ arg
   show (Negate arg) = "neg " ++ arg
-  show (Or dest src) = showBinOp "or" dest src
   show (Pop dest) = "pop " ++ dest
   show (Push src) = "push qword " ++ src
   show Return = "ret"
@@ -121,16 +111,16 @@ instance Show DataSize where
   show DataByte = "db"
   show DataQword = "dq"
 
-preserveRegisters :: Registers
-preserveRegisters =
-  ["rbx", "rsp", "rbp", "r12", "r13", "r14", "r15"]
+-- preserveRegisters :: Registers
+-- preserveRegisters =
+--   ["rbx", "rsp", "rbp", "r12", "r13", "r14", "r15"]
 
 scratchRegisters :: Registers
 scratchRegisters =
   ["rax", "rdi", "rsi", "rdx", "rcx", "r8", "r9", "r10", "r11"]
 
-registers :: Registers
-registers = preserveRegisters ++ scratchRegisters
+-- registers :: Registers
+-- registers = preserveRegisters ++ scratchRegisters
 
 argRegisters :: Registers
 argRegisters = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
@@ -138,10 +128,6 @@ argRegisters = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 scratch32Registers :: Registers
 scratch32Registers =
   ["eax", "edi", "esi", "edx", "ecx", "r8d", "r9d", "r10d", "r11d"]
-
-scratch16Registers :: Registers
-scratch16Registers =
-  ["ax", "di", "si", "dx", "cx", "r8w", "r9w", "r10w", "r11w"]
 
 scratch8Registers :: Registers
 scratch8Registers =
@@ -154,9 +140,6 @@ convertRegister to reg =
 
 to32bit :: Register -> Register
 to32bit = convertRegister scratch32Registers
-
-to16bit :: Register -> Register
-to16bit = convertRegister scratch16Registers
 
 to8bit :: Register -> Register
 to8bit = convertRegister scratch8Registers

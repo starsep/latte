@@ -1,0 +1,12 @@
+class Y {
+  void y() {}
+}
+
+class X {
+  Y y;
+}
+int main() {
+  X x = new X;
+  x.y = x;
+  return 0;
+}

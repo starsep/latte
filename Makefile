@@ -76,8 +76,6 @@ testGood: Latte
 	$(call test_examples,good/virtual,OK)
 	$(call test_examples,good/gr5,OK)
 
-# $(call test_examples,good/hardcore,OK)
-
 testBad: Latte
 	$(call test_examples,bad,ERROR)
 	$(call test_examples,bad/semantic,ERROR)
@@ -111,7 +109,7 @@ $(BNFC_SOURCES): src/Latte.cf
 	alex -g LexLatte.x
 
 lib/runtime.o: lib/runtime.c
-	gcc -g -c -o $@ $<
+	gcc -Wall -g -c -o $@ $<
 
 pack:
 	tar czvf $(PACK_NAME) $(FILES_TO_PACK)
