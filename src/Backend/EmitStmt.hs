@@ -67,8 +67,7 @@ emitStmt q = case q of
       tell [Add stackPointer "8"]
 
 emitReturn :: CMonad ()
-emitReturn = do
-  gcScopeVars
+emitReturn =
   jumpEndLabel
 
 emitBlock :: Block -> CMonad ()
@@ -77,7 +76,6 @@ emitBlock (Block stmts) = do
   putVars (Map.empty : vars, nextVar)
   forM_ stmts emitStmt
   (vars', nextVar') <- getVars
-  gcScopeVars
   putVars (tail vars', nextVar')
 
 emitFor :: Type -> Ident -> Expr -> Stmt -> CMonad ()
@@ -128,9 +126,6 @@ assign t lv = do
   when (isGCType t) $ do
     tell [Push $ "[" ++ stackPointer ++ "]"]
     gcIncr
-    -- TODO: GC
-    -- void $ dereference lv
-    -- gcDecr
   _ <- emitLValue lv
   localReserve 2 $ \[l, e] ->
     tell [

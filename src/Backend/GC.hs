@@ -2,26 +2,15 @@ module GC where
 
 import AbsLatte
 import Asm
--- import Control.Monad
 import Control.Monad.RWS (tell)
--- import qualified Data.Map as Map
 import State
 
 isGCType :: Type -> Bool
 isGCType t = case t of
   Str -> True
   Array _ -> True
+  ClassType _ -> True
   _ -> False
-
-gcScopeVars :: CMonad ()
-gcScopeVars = do
-  --(vars, _) <- getVars
-  return ()
-  --forM_ (Map.toList $ head vars) $ \(name, (addr, t)) ->
-    --when (isGCType t) $ do
-      -- TODO: GC
-      --tell [Push $ show addr]
-      --gcDecr
 
 callGcFun :: String -> CMonad ()
 callGcFun name = do
