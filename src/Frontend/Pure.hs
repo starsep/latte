@@ -53,6 +53,7 @@ isReturning stmt = case stmt of
   CondElse bExpr stmt1 stmt2 ->
     (isFalse bExpr || isReturning stmt1) && (isTrue bExpr || isReturning stmt2)
   While bExpr stmt' -> isTrue bExpr && mightBeReturning stmt'
+  SExp (EApp (Ident "error") []) -> True
   _ -> False
 
 mightBeReturning :: Stmt -> Bool
