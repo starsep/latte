@@ -17,7 +17,7 @@ callGcFun name = do
   let r = head argRegisters
   localReserveReg r $
     tell [
-      Pop $ head argRegisters,
+      Pop r,
       Call name]
 
 gcDecr :: CMonad ()

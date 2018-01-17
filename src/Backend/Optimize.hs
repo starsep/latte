@@ -78,7 +78,7 @@ removeUnusedLabels :: AsmStmts -> AsmStmts
 removeUnusedLabels prog =
   let used = usedLabels prog
       isNotUnusedLabel s = case s of
-        Label x -> '@' `elem` x || x `elem` used
+        Label x -> ('@' `elem` x && '$' `notElem` x) || x `elem` used
         Extern x -> x `elem` used
         _ -> True in
   filter isNotUnusedLabel prog
