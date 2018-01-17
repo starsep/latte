@@ -50,7 +50,7 @@ emitAddOp e1 e2 Minus = do
 
 emitExpr :: Expr -> CMonad Type
 emitExpr q = case q of
-  ENull t -> do
+  ENull t _ -> do
     tell [Push "0"]
     return t
   ESubs subs -> dereference $ LSubs subs

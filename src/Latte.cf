@@ -52,9 +52,11 @@ separator  Type "," ;
 
 -- Expressions ---------------------------------------------
 
+token NullToken (')' [" \n\t"]* {"null"}) ;
+
 Subs.      ESubs ::= Expr6 "[" Expr "]" ;
 SubsR.     ESubs ::= ESubs "[" Expr "]" ;
-ENull.     Expr8 ::= "(" Type ")null" ;
+ENull.     Expr9 ::= "(" Type NullToken ;
 ESubs.     Expr8 ::= ESubs ;
 EVar.      Expr8 ::= Ident ;
 EMethod.   Expr7 ::= Expr6 "." Ident "(" [Expr] ")" ;
@@ -73,7 +75,7 @@ EAdd.      Expr3 ::= Expr3 AddOp Expr4 ;
 ERel.      Expr2 ::= Expr2 RelOp Expr3 ;
 EAnd.      Expr1 ::= Expr2 "&&" Expr1 ;
 EOr.       Expr ::= Expr1 "||" Expr ;
-coercions  Expr 8 ;
+coercions  Expr 9 ;
 separator  Expr "," ;
 
 -- operators -----------------------------------------------

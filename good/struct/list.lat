@@ -30,7 +30,7 @@ int length (list xs) {
 
 list fromTo (int m, int n) {
   if (m>n)
-    return (list)null;
+    return (list) null;
   else 
     return cons (m,fromTo (m+1,n));
 }

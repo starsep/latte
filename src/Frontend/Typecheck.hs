@@ -72,7 +72,7 @@ typeOf q =
             Field t' _ -> return t'
             _ -> showErrorV $ Errors.methodAsField className name
         _ -> showErrorV $ Errors.simpleTypeField object t name
-    ENull t -> do
+    ENull t _ -> do
       unless (isClass t) $
         showError $ Errors.nullOfType t
       return t
