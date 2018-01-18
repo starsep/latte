@@ -8,8 +8,6 @@ import State
 isGCType :: Type -> Bool
 isGCType t = case t of
   Str -> True
-  Array _ -> True
-  ClassType _ -> True
   _ -> False
 
 callGcFun :: String -> CMonad ()

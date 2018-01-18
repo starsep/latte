@@ -26,10 +26,6 @@ void _free(Ptr ptr) {
   free(ptr);
 }
 
-Ptr *_malloc(Int64 size) { return malloc(size); }
-
-Ptr *_calloc(Int64 num, Int64 size) { return calloc(num, size); }
-
 Int64 readInt() {
   Int64 result;
   scanf("%lld  ", &result);
@@ -49,14 +45,13 @@ String readString() {
 }
 
 static Ptr _new(Int64 size) {
-  Ptr res = _calloc(size, 8);
-  _gcIncr(res);
+  Ptr res = calloc(size, 8);
   return res;
 }
 
 Ptr _newClass(Int64 size, Ptr vtable) {
   Ptr res = _new(size + 1);
-  fprintf(stderr, "NEW CLASS %lld %lld\n", size, (Int64)vtable);
+  fprintf(stderr, "NEW CLASS SIZE=%lld VTABLE=%lld, RESULT=%lld\n", size, (Int64)vtable, (Int64)res);
   ((Ptr *)res)[0] = vtable;
   return res;
 }
@@ -97,7 +92,7 @@ Ptr _classField(Ptr obj, Int64 n) {
 
 String _copyStr(const String s) {
   int len = strlen(s) + 1;
-  String res = (String)_malloc(len);
+  String res = (String)malloc(len);
   _gcIncr(res);
   strcpy(res, s);
   return res;
@@ -106,7 +101,7 @@ String _copyStr(const String s) {
 String _concat(const String s1, const String s2) {
   const int len1 = strlen(s1);
   const int len = len1 + strlen(s2) + 1;
-  String res = (String)_malloc(len);
+  String res = (String)malloc(len);
   _gcIncr(res);
   strcpy(res, s1);
   strcpy(res + len1, s2);
@@ -125,7 +120,7 @@ static gcCounter *gcFirst = NULL;
 static gcCounter *gcLast = NULL;
 
 static gcCounter *_gcInit(Ptr ptr) {
-  gcCounter *res = (gcCounter *)_malloc(sizeof(gcCounter));
+  gcCounter *res = (gcCounter *)malloc(sizeof(gcCounter));
   res->ptr = ptr;
   res->count = 1;
   res->next = NULL;

@@ -4,10 +4,12 @@ import AbsLatte
 import Asm
 import Control.Monad
 import Control.Monad.RWS (tell)
+import Data.List.Split
 import Data.Map ((!))
 import qualified Data.Map as Map
 import Data.Maybe
 import {-# SOURCE #-} EmitClass
+import Env
 import Label
 import State
 
@@ -148,14 +150,21 @@ emitEApp ident args = do
   else
     emitExpr $ EMethod (EVar (Ident "self")) ident args
 
-emitEApp' :: Ident -> [Expr] -> Maybe Register -> CMonad Type
-emitEApp' ident@(Ident name) args callReg = do
-  let argsLen = length args
+emitEApp' :: Ident -> [Expr] -> Maybe ClassName -> CMonad Type
+emitEApp' ident@(Ident name) args className = do
+  let method = isJust className
+      argsLen = length args
       argsRegs = take (min 6 argsLen) argRegisters
       argsToRemove = argsLen - 6
   forM_ (reverse args) emitExpr
+  let callReg = last scratchRegisters
+  when method $ do
+    tell [Push "[rsp]"]
+    let methodName = Ident $ head $ splitOn "@" name
+    emitMethodVTable (fromJust className) methodName
+    tell [Pop callReg]
   tell $ map Pop argsRegs
-  let toCall = fromMaybe name callReg
+  let toCall = if method then callReg else name
   tell [Call toCall]
   when (argsToRemove > 0) $
     tell [Add stackPointer $ show $ argsToRemove * 8]

@@ -1,0 +1,38 @@
+class Builder {
+  int x;
+  string y;
+  boolean z;
+
+  Builder setX(int v) {
+    x = v;
+    return self;
+  }
+
+  Builder setY(string v) {
+    y = v;
+    return self;
+  }
+
+  Builder setZ(boolean v) {
+    z = v;
+    return self;
+  }
+
+  void print() {
+    printInt(x);
+    printString(y);
+    if (z) {
+      printString("true");
+    } else {
+      printString("false");
+    }
+  }
+}
+int main() {
+  Builder b = (new Builder)
+    .setX(42)
+    .setY("Hello")
+    .setZ(false);
+  b.print();
+  return 0;
+}

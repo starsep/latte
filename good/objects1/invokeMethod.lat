@@ -1,0 +1,20 @@
+class X {
+  int c;
+  X x() {
+    c++;
+    return self;
+  }
+  int y;
+}
+
+int main() {
+  X x = new X;
+  x.c = 0;
+  x.y = 42;
+  X x2 = x.x().x().x().x().x();
+  printInt(x2.c);
+  printInt(x2.y);
+  return 0;
+}
+
+

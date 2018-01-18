@@ -64,14 +64,13 @@ emitField obj ident = do
 
 emitMethodInvoke :: Expr -> Ident -> [Expr] -> CMonad Type
 emitMethodInvoke lv ident args = do
-  (ClassType className) <- emitExpr lv
+  (ClassType className) <- localRWS $ emitExpr lv
   let methodName = classMethodIdent className ident
-  reg <- emitMethodVTable className ident
-  emitEApp' methodName (lv : args) (Just reg)
+  emitEApp' methodName (lv : args) (Just className)
 
-emitMethodVTable :: ClassName -> Ident -> CMonad Register
+emitMethodVTable :: ClassName -> Ident -> CMonad ()
 emitMethodVTable className method = do
-  let regs@[res, r1, r2] = last scratchRegisters : take 2 argRegisters
+  let regs@[r1, r2] = take 2 argRegisters
   classesData <- askClassesData
   let (methods, _) = classesData ! className
       methods' = filter (\(ClassMethod _ name _ _) -> name == method) methods
@@ -81,8 +80,7 @@ emitMethodVTable className method = do
       Pop r1,
       Mov r2 $ show methodNumber,
       Call "_vtableAsk",
-      Mov res resultReg]
-  return res
+      Push resultReg]
 
 findFieldIndex :: Ident -> Ident -> CMonad (Int, Type)
 findFieldIndex className field = do

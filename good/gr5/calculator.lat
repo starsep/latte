@@ -1,6 +1,5 @@
 int main() {
     Node w = plus(minus(liczba(4), liczba(3)), razy(liczba(2), podziel(liczba(4), liczba(2))));
-    w = plus(liczba(4), liczba(5));
     printInt(w.value());
     return 0;
 }

@@ -1,0 +1,18 @@
+class X {
+  int x;
+  void print() {
+    printString("I'm x and my value is:");
+    printInt(x);
+  }
+}
+
+X createX() {
+  X x = new X;
+  x.x = 42;
+  return x;
+}
+
+int main() {
+  createX().print();
+  return 0;
+}

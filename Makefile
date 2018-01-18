@@ -49,7 +49,7 @@ define test_example
 		if [ -e $${e%.lat}.input ]; then \
 		  INPUT=$${e%.lat}.input; \
 		fi; \
-		valgrind ./$${e%.lat} < "$$INPUT" > "${BUILD}"/output 2> "${BUILD}"/val; \
+		./$${e%.lat} < "$$INPUT" > "${BUILD}"/output 2> "${BUILD}"/val; \
 		grep "definitely lost\|still reachable" "${BUILD}"/val; \
 		cmp $${e%.lat}.output "${BUILD}"/output &> /dev/null || (\
 		git --no-pager diff --no-index $${e%.lat}.output "${BUILD}"/output; \

@@ -29,6 +29,27 @@ class Node {
       neighbours = newNeighbours;
     }
   }
+
+  void print() {
+    printString("VISITING NODE:");
+    printInt(value);
+    visited = true;
+    printString("NEIGHBOURS ARE:");
+    List neigh = neighbours;
+    while (neigh != (List) null) {
+      printInt(neigh.head.value);
+      neigh = neigh.tail;
+    }
+    printString("--------");
+    neigh = neighbours;
+    while (neigh != (List) null) {
+      if (!neigh.head.visited) {
+        neigh.head.print();
+      }
+      neigh = neigh.tail;
+    
+    }
+  }
 }
 
 class List {
@@ -138,6 +159,8 @@ void bfs(Queue q) {
     List neigh = el.getNeighbours();
     while (neigh != (List)null) {
       Node n = neigh.getHead();
+      //printString("CHECKING");
+      //printInt(n.value);
       if (!n.isVisited()) {
         n.markAsVisited();
         q.put(n);
