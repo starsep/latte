@@ -1,3 +1,4 @@
+// Filip Czaplicki
 void assert(boolean x) {
   if (!x) {
     error();
