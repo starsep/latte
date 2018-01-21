@@ -1,0 +1,14 @@
+class X {
+  int x;
+  void setX(int x) {
+    self.x = x;
+  }
+}
+
+
+int main() {
+  X x = new X;
+  x.setX(42);
+  printInt(x.x);
+  return 0;
+}
