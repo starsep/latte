@@ -2,18 +2,6 @@ Filip Czaplicki <fc359081@students.mimuw.edu.pl>
 
 [![Build Status](https://travis-ci.com/starsep/latte.svg?token=pEpks3xQCroxuTSsHPm9&branch=master)](https://travis-ci.com/starsep/latte)
 
-# Punktacja
-Zaimplementowałem następujące elementy:
-- front-end (4)
-- back-end x86 (10)
-- wykorzystanie rejestrów dla x86 - dodatkowo do 4p (na 4p alokacja rejestrów)
-- optymalizacje - do 3p
-- tablice (2)
-- struktury (2)
-- obiekty (atrybuty, metody, dziedziczenie bez zastępowania metod) - dodatkowo (4)
-- metody wirtualne - dodatkowo 4, czyli za obiekty z metodami wirtualnymi można uzyskać 10 punktów.
-- odśmiecanie (2)
-
 # Kompilacja
 Program kompiluje się po wykonaniu `make`.
 Za pomocą `bnfc`, `happy` oraz `alex` generowane jest z
@@ -94,6 +82,6 @@ Optymalizacje zaimplementowane są w src/Backend/Optimize.hs. Funkcja:
 # Zapożyczenia
 Moje projekty:
 - interpreter języka opartego na Latte (w ramach IPP) https://github.com/starsep/lang
-- pierwsze zadanie z MRJP - kompilator Instant
+- pierwsze zadanie z MRJP - kompilator Instant https://github.com/starsep/instant
 
 Testy z https://github.com/tomwys/mrjp-tests
